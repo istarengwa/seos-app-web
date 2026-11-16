@@ -5,6 +5,7 @@ import french from "grapesjs/locale/fr.mjs"
 import { registerWave, installControls, waveSelector, isWave } from "./studio_editor_controls"
 import { installLegalEditor } from "./studio_legal_editor"
 import { installRetention } from "./studio_retention"
+import { outlineOptions, outlineLabel, installPageOutline } from "./studio_page_outline"
 
 const root = document.querySelector("[data-studio-builder]")
 
@@ -85,7 +86,7 @@ if (root) {
     style: `${config.initialCss}\n.studio-grid-2,.studio-grid-3,.studio-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}.studio-grid-3,.studio-card-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.studio-stack{display:flex;flex-direction:column;gap:20px}.studio-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.85fr);gap:48px;align-items:center;padding:72px max(24px,6vw)}.studio-hero img{width:100%;min-height:360px;object-fit:cover;border-radius:32px}.studio-gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.studio-gallery img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:16px}.studio-card{padding:28px;border:1px solid var(--line,#dbe5e7);border-radius:20px;background:var(--white,#fff);box-shadow:0 12px 32px rgba(7,62,80,.08)}.studio-callout{padding:24px;border-left:5px solid var(--gold,#d2b34e);border-radius:12px;background:var(--mist,#eef5f5)}.studio-quote{max-width:65ch;padding:28px;border-left:5px solid var(--gold,#d2b34e);font-size:1.25rem}.studio-list{display:grid;gap:10px}.studio-accordion{border:1px solid var(--line,#dbe5e7);border-radius:14px;background:#fff}.studio-accordion summary{padding:18px;font-weight:700;cursor:pointer}.studio-accordion div{padding:0 18px 18px}.studio-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:center}.studio-stats div{padding:24px;border-radius:18px;background:var(--mist,#eef5f5)}.studio-stats strong,.studio-stats span{display:block}.studio-stats strong{font-size:2rem;color:var(--deep,#073e50)}.studio-transition{position:relative;min-height:90px;overflow:hidden}.studio-transition--wave svg{display:block;width:100%;height:var(--wave-height,90px);transform:rotate(var(--wave-angle,0deg));transform-origin:center}.studio-transition--wave path{fill:var(--wave-color,#d2b34e)}.studio-transition--bubbles span{position:absolute;border-radius:50%;background:var(--bubble-color,#d2b34e);opacity:.72}.studio-transition--bubbles span:nth-child(1){width:44px;height:44px;left:8%;top:24px}.studio-transition--bubbles span:nth-child(2){width:76px;height:76px;left:32%;top:5px}.studio-transition--bubbles span:nth-child(3){width:30px;height:30px;right:28%;top:40px}.studio-transition--bubbles span:nth-child(4){width:60px;height:60px;right:8%;top:15px}.studio-transition--curve span,.studio-transition--diagonal span,.studio-transition--zigzag span{position:absolute;inset:0;background:var(--transition-color,#d2b34e)}.studio-transition--curve span{border-radius:50% 50% 0 0/100% 100% 0 0;transform:translateY(32%)}.studio-transition--diagonal span{clip-path:polygon(0 68%,100% 10%,100% 100%,0 100%)}.studio-transition--zigzag span{clip-path:polygon(0 55%,5% 25%,10% 55%,15% 25%,20% 55%,25% 25%,30% 55%,35% 25%,40% 55%,45% 25%,50% 55%,55% 25%,60% 55%,65% 25%,70% 55%,75% 25%,80% 55%,85% 25%,90% 55%,95% 25%,100% 55%,100% 100%,0 100%)}.studio-transition--dots span{position:absolute;inset:12px;background-image:radial-gradient(circle,var(--gold,#d2b34e) 2px,transparent 2.5px);background-size:22px 22px}.studio-decoration{min-height:180px}.studio-decoration--gradient{background:radial-gradient(circle at 30% 50%,rgba(15,151,173,.35),transparent 35%),radial-gradient(circle at 70% 45%,rgba(210,179,78,.35),transparent 32%)}.studio-anim-fade{animation:studioFade .55s ease-out both}.studio-anim-up{animation:studioUp .55s ease-out both}.studio-anim-side{animation:studioSide .55s ease-out both}.studio-anim-zoom{animation:studioZoom .45s ease-out both}.studio-anim-float{animation:studioFloat 4s ease-in-out infinite}@keyframes studioFade{from{opacity:0}to{opacity:1}}@keyframes studioUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}@keyframes studioSide{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}@keyframes studioZoom{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}@keyframes studioFloat{50%{transform:translateY(-8px)}}@media(max-width:700px){.studio-grid-2,.studio-grid-3,.studio-card-grid,.studio-hero,.studio-stats{grid-template-columns:1fr}.studio-hero{padding:40px 20px}.studio-hero img{min-height:240px}}@media(prefers-reduced-motion:reduce){.studio-anim-fade,.studio-anim-up,.studio-anim-side,.studio-anim-zoom,.studio-anim-float{animation:none!important}}`,
     canvas: { styles: config.stylesheets },
     blockManager: { appendTo: library },
-    layerManager: { appendTo: "[data-studio-layers]" },
+    layerManager: outlineOptions(config),
     traitManager: { appendTo: "[data-studio-traits]" },
     selectorManager: { componentFirst: true },
     deviceManager: { devices: [
@@ -117,7 +118,7 @@ if (root) {
           defaults: { droppable: false, editable: false, copyable: false, removable: false },
           init() {
             const protect = component => {
-              component.set({ selectable: false, hoverable: false, draggable: false, droppable: false, editable: false, copyable: false, removable: false, stylable: false })
+              component.set({ selectable: false, hoverable: false, layerable: false, draggable: false, droppable: false, editable: false, copyable: false, removable: false, stylable: false })
               component.components().each(protect)
             }
             this.components().each(protect)
@@ -166,17 +167,17 @@ if (root) {
   }
   root.querySelectorAll("[data-settings-tab]").forEach(button => button.addEventListener("click", () => setSettingsTab(button.dataset.settingsTab)))
 
-  editor.on("component:selected", component => {
+  installPageOutline(editor, root, config)
+  editor.on("component:selected", (component, options = {}) => {
     const dynamicLabel = component.getAttributes()["data-studio-dynamic"]
-    const names = { wrapper: "Page entière", div: "Conteneur", section: "Section", h1: "Titre principal", h2: "Titre", h3: "Sous-titre", p: "Texte", span: "Texte", a: "Lien ou bouton", img: "Image", body: "Page entière" }
-    const label = dynamicLabel || (isWave(component) ? "Vague de séparation" : names[component.get("tagName")]) || component.getName() || "Élément"
+    const label = isWave(component) ? "Vague de séparation" : outlineLabel(component, config)
     root.querySelector("[data-studio-selection-name]").textContent = label.charAt(0).toUpperCase() + label.slice(1)
     root.querySelector("[data-dynamic-notice]").hidden = !dynamicLabel
     root.querySelector('[data-settings-tab="content"]').disabled = Boolean(dynamicLabel)
     root.querySelector("[data-studio-delete]").disabled = Boolean(dynamicLabel)
     const animation = component.getClasses().find(name => name.startsWith("studio-anim-")) || ""
     root.querySelector("[data-studio-animation]").value = animation
-    switchPanel(dynamicLabel === "Documents légaux" ? "legal" : "settings")
+    if (!options.fromLayers) switchPanel(dynamicLabel === "Documents légaux" ? "legal" : "settings")
   })
   const originalIds = new Set(Array.from(new DOMParser().parseFromString(config.initialHtml, "text/html").querySelectorAll("[id]")).map(node => node.id))
   const snapshot = () => {
@@ -316,7 +317,7 @@ if (root) {
   window.addEventListener("beforeunload", event => { if (ready && snapshot() !== baseline) event.preventDefault() })
   editor.on("load", () => {
     const protect = component => {
-      component.set({ selectable: false, hoverable: false, draggable: false, droppable: false, editable: false, copyable: false, removable: false, stylable: false })
+      component.set({ selectable: false, hoverable: false, layerable: false, draggable: false, droppable: false, editable: false, copyable: false, removable: false, stylable: false })
       component.components().each(protect)
     }
     editor.getWrapper().find("[data-studio-dynamic]").forEach(widget => widget.components().each(protect))

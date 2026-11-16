@@ -23,7 +23,7 @@ RSpec.describe "Studio accessible, vagues et documents", type: :system do
     expect(page).to have_css(".studio-simple-controls legend", text: "Typographie")
     expect(page).to have_select("Taille du texte", with_options: [ "Petit", "Normal", "Grand" ])
     expect(page).not_to have_content("Font weight")
-    within(".studio-v2-sidebar-tabs") { click_button "Structure" }
+    within(".studio-v2-sidebar-tabs") { click_button "Plan de la page" }
     layer = find(".gjs-layer-title", match: :first)
     expect(layer.native.css_value("background-color")).not_to eq("rgba(68, 68, 68, 1)")
     expect do
@@ -49,6 +49,58 @@ RSpec.describe "Studio accessible, vagues et documents", type: :system do
     expect(StudioVersion.last.id).not_to eq(source.id)
     expect(StudioVersion.last.site.dig("pages", "home", "canvas", "html")).to include("Un titre modifié sans code")
     expect(source.reload.site.dig("pages", "home", "canvas")).to be_nil
+  end
+
+  it "présente un plan lisible, sélectionne au clavier et suit les textes modifiés" do
+    click_button "Plan de la page", exact: true
+    expect(page).to have_css('[data-name]', text: "Section : Notre collectif", exact_text: true)
+    expect(page).not_to have_css('[data-name]', text: /\A(Conteneur|Template|Body)\z/)
+    8.times do
+      break if page.has_css?('[data-name]', text: "Titre : Notre collectif", exact_text: true, wait: 0)
+      first('[data-studio-layers] [data-toggle-open][aria-expanded="false"][tabindex="0"]').click
+    end
+    title = find('[data-name]', text: "Titre : Notre collectif", exact_text: true)
+    title.send_keys(:enter)
+    expect(page).to have_css('[data-studio-panel="layers"]:not([hidden])')
+    expect(page).to have_css('[data-studio-selection-name]', text: "Titre : Notre collectif", visible: :all)
+    expect(page).to be_axe_clean.within(".studio-v2-sidebar").according_to(:wcag2a, :wcag2aa)
+    find('[data-studio-panel="layers"]').native.save_screenshot(Rails.root.join("tmp/screenshots/studio-page-outline.png").to_s)
+    within(".studio-v2-sidebar-tabs") { click_button "Réglages" }
+    within_frame(find(".gjs-frame")) do
+      find("h2", text: "Notre collectif").double_click
+      find('[contenteditable="true"]').send_keys(:end, " local")
+      find("footer").click
+    end
+    click_button "Plan de la page", exact: true
+    expect(page).to have_css('[data-name]', text: "Titre : Notre collectif local", exact_text: true)
+    expect(page).to have_css('[data-name]', text: "Section : Notre collectif local", exact_text: true)
+    click_button "Enregistrer", exact: true
+    expect(page).to have_content("Modifications enregistrées")
+    expect(StudioVersion.last.site.dig("pages", "home", "canvas", "html")).to include("Notre collectif local")
+    expect(page.driver.browser.logs.get(:browser).select { |entry| entry.level == "SEVERE" }).to be_empty
+  end
+
+  it "ouvre le plan de l’accueil directement sur ses sections sans enveloppes techniques" do
+    version = Studio.change!(actor: admin, name: "Accueil complet", settings: { "site" => { "pages" => { "home" => SiteDesign.home_page } } })
+    visit builder_admin_site_path(version)
+    click_button "Plan de la page", exact: true
+    expect(page).to have_css('[data-name]', text: "Présentation d’accueil")
+    expect(page).not_to have_css('[data-name]', text: /\A(Conteneur|Template|Body|Page entière)\z/)
+    [ 1440, 1024 ].each do |width|
+      resize_viewport(width)
+      expect(page.evaluate_script("document.documentElement.scrollWidth <= innerWidth")).to be(true)
+      expect(page).to be_axe_clean.within(".studio-v2-sidebar").according_to(:wcag2a, :wcag2aa)
+      find(".studio-v2-sidebar").native.save_screenshot(Rails.root.join("tmp/screenshots/studio-home-outline-#{width}.png").to_s)
+    end
+    before_ids = within_frame(find(".gjs-frame")) { all("[data-studio-block]").map { |node| node["data-studio-block"] } }
+    handles = all('[data-studio-layers] [data-toggle-move]', visible: true)
+    target = all('[data-studio-layers] [data-name]', visible: true)[1]
+    handles.first.drag_to(target)
+    within_frame(find(".gjs-frame")) do
+      expect(page).to have_selector(:xpath, '(//*[@data-studio-block])[1][@data-studio-block="home-1"]')
+      expect(all("[data-studio-block]").map { |node| node["data-studio-block"] }.sort).to eq(before_ids.sort)
+    end
+    expect(page.driver.browser.logs.get(:browser).select { |entry| entry.level == "SEVERE" }).to be_empty
   end
 
   it "sélectionne une vague existante, la retourne et enregistre les formes SVG" do
