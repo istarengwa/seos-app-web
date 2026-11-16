@@ -6,6 +6,48 @@ on:
 permissions:
   contents: read
 jobs:
+  postgresql:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_USER: seos
+          POSTGRES_PASSWORD: seos_ci_only
+          POSTGRES_DB: seos_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U seos -d seos_test"
+          --health-interval 10s --health-timeout 5s --health-retries 10
+    env:
+      RAILS_ENV: test
+      COVERAGE: "0"
+      DATABASE_URL: postgresql://seos:seos_ci_only@127.0.0.1:5432/seos_test
+      SCHEMA: tmp/postgresql_migration_schema.rb
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install PostgreSQL 17 client and application libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvips sqlite3 postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17
+          echo /usr/lib/postgresql/17/bin >> "$GITHUB_PATH"
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.8.0
+          cache: yarn
+      - run: npm install --global yarn@1.22.22
+      - run: yarn install --frozen-lockfile && yarn build
+      - run: docker compose --env-file .env.example config --quiet
+      - run: bin/rails db:migrate
+      - run: bundle exec rspec spec/models spec/services spec/seeds spec/requests/studio_builder_v2_spec.rb spec/requests/studio_builder_workflow_spec.rb spec/requests/home_presentation_spec.rb spec/requests/admin_activity_spec.rb
+      - run: SEOS_CONCURRENCY_CHECK=1 bin/rails runner scripts/check-ledger-concurrency.rb
   quality:
     runs-on: ubuntu-24.04
     steps:
@@ -53,6 +95,7 @@ jobs:
       - run: yarn build:check
       - run: bin/rails zeitwerk:check
       - run: bin/rails db:test:prepare
+      - run: bin/check-ledger-concurrency
       - run: bin/check-exchange-concurrency
       - run: bundle exec rspec --format progress --format RspecJunitFormatter --out tmp/rspec.xml
         env:

@@ -7,6 +7,7 @@ CI.run do
   step "Security: Yarn vulnerability audit", "yarn audit"
   step "Security: Brakeman", "bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
   step "Tests: RSpec", "bundle exec rspec"
+  step "Tests: Concurrent ledger", "bin/check-ledger-concurrency"
   step "Tests: Concurrent exchanges", "bin/check-exchange-concurrency"
   step "Tests: Seeds", "env RAILS_ENV=test bin/rails db:seed"
 end

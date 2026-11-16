@@ -23,8 +23,8 @@ RSpec.describe "Revue communautaire et droits", type: :request do
     login admin
     get media_path(record.proof.attachment)
     expect(response).to have_http_status(:ok)
-    get admin_community_index_path
-    expect(response.body).to include("Voir la preuve")
+    get admin_community_index_path(tab: "proofs")
+    expect(response.body).to include("Voir la preuve jointe")
   end
 
   it "revoit et retire un Top, traite un litige et versionne la politique" do
@@ -47,8 +47,10 @@ RSpec.describe "Revue communautaire et droits", type: :request do
     expect(response).to have_http_status(:forbidden)
     post admin_community_index_path, params: { operation: "chain", record_id: chain.id, decision: "disputed", reason: "Médiation" }
     expect(response).to have_http_status(:see_other)
-    get admin_community_index_path
-    expect(response.body).to include("Service litigieux", "Mission utile")
+    get admin_community_index_path(tab: "chains")
+    expect(response.body).to include("Service litigieux")
+    get admin_community_index_path(tab: "highlights")
+    expect(response.body).to include("Mission utile")
     post admin_community_index_path, params: { operation: "policy", urgent_days: 3, top_max_days: 10, reason: "Rotation" }
     expect(response).to have_http_status(:see_other)
     expect(CommunityPolicyVersion.current.urgent_days).to eq(3)

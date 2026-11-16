@@ -101,5 +101,4 @@ RSpec.describe "Organisations, Voyage et partenaires", type: :request do
     get account_mission_application_path(application)
     expect(response).to have_http_status(:forbidden)
   end
-
 end

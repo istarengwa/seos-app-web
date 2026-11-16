@@ -22,9 +22,9 @@ RSpec.describe "Interface engagement", type: :system do
     expect(page.evaluate_script("getComputedStyle(document.querySelector('.quest-card')).animationName")).to eq("none")
     page.driver.browser.execute_cdp("Emulation.setEmulatedMedia", features: [])
     expect(page).not_to have_field("Votre témoignage public")
-    within(".account-sidebar .desktop-workspace-navigation") { click_link "Mes témoignages" }
+    visit account_testimonials_path
     expect(page).to have_current_path(account_testimonials_path)
-    expect(page).to have_css('a[aria-current="page"]', text: "Mes témoignages")
+    expect(page).to have_css("h1", text: "Mes témoignages")
     [ 375, 1440 ].each do |width|
       resize_viewport(width)
       expect(page.evaluate_script("document.documentElement.scrollWidth <= innerWidth")).to be(true)

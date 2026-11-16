@@ -90,7 +90,7 @@ RSpec.describe "Découverte, publication et confidentialité", :"F-011", :"F-013
     expect(profile.phone).to eq("0612345678")
     expect(profile.read_attribute_before_type_cast(:phone)).not_to include("0612345678")
     patch account_profile_path, params: { profile: { bio: "Contact : prive@example.test" } }
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
   end
 
   it "gère favoris privés et commentaires séparés des avis" do
@@ -120,7 +120,7 @@ RSpec.describe "Découverte, publication et confidentialité", :"F-011", :"F-013
     post contact_path, params: { website: "spam", contact_request: { email: "spam@example.test" } }
     expect(ContactRequest.count).to eq(1)
     post contact_path, params: { contact_request: { email: "invalide" } }
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     3.times { post contact_path, params: { contact_request: { email: "invalide" } } }
     expect(response).to have_http_status(:too_many_requests)
   end

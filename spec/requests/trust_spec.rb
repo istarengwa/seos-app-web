@@ -107,10 +107,12 @@ RSpec.describe "Parcours confiance et parrainage", type: :request do
     get risks_admin_trust_index_path
     expect(response).to have_http_status(:forbidden)
     grant(manager, "trust.manage")
-    %w[version exemption].each do |operation|
+    before = [ TrustAlgorithmVersion.count, AuditLog.count ]
+    %w[version algorithm exemption].each do |operation|
       post admin_trust_index_path, params: { operation: operation }
-      expect(response).to have_http_status(:forbidden)
+      expect(response).to have_http_status(:unprocessable_content)
     end
+    expect([ TrustAlgorithmVersion.count, AuditLog.count ]).to eq(before)
     post admin_trust_index_path, params: { operation: "risk", record_id: 1, decision: "dismissed" }
     expect(response).to have_http_status(:forbidden)
     grant(manager, "trust.risk")
@@ -127,17 +129,14 @@ RSpec.describe "Parcours confiance et parrainage", type: :request do
     expect(response).to have_http_status(:ok)
   end
 
-  it "gère les versions, exemptions, corrections et invalidations dans des transactions auditées" do
+  it "audite les corrections et invalidations sans réintroduire les anciennes opérations de configuration" do
     login admin
-    post admin_trust_index_path, params: { operation: "version", version: "v1-test", explanation: "Formule documentée", reason: "Préparation" }
-    expect(response).to have_http_status(:see_other)
-    version = TrustAlgorithmVersion.last
-    post admin_trust_index_path, params: { operation: "algorithm", record_id: version.id, decision: "simulate", reason: "Scénarios vérifiés" }
-    expect(response).to have_http_status(:see_other)
-    expect(version.reload.status).to eq("simulated")
-    post admin_trust_index_path, params: { operation: "exemption", record_id: user.id, reason: "Compte fondateur de test" }
-    expect(response).to have_http_status(:see_other)
-    expect(Referrals.eligible?(user)).to be(true)
+    before = [ TrustAlgorithmVersion.count, AuditLog.count ]
+    %w[version algorithm exemption].each do |operation|
+      post admin_trust_index_path, params: { operation: operation, reason: "Ancienne action" }
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+    expect([ TrustAlgorithmVersion.count, AuditLog.count ]).to eq(before)
     support(user)
     referral = Referral.last
     post admin_trust_index_path, params: { operation: "referral", record_id: referral.id, reason: "Soutien erroné" }

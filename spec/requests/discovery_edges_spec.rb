@@ -174,5 +174,4 @@ RSpec.describe "Limites d’accès et transitions de découverte", type: :reques
     get listing_path(listing)
     expect(response.body).to include('"@type":"Demand"')
   end
-
 end
