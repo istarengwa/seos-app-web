@@ -3,7 +3,9 @@ class StudioVersion < ApplicationRecord
   COLORS = { "deep" => "#004961", "seos" => "#0092C5", "turq" => "#21A2AF", "gold" => "#CDAE4F", "cream" => "#FBFAF4", "mist" => "#EEF7F9", "ink" => "#173947", "muted" => "#64767D", "line" => "#D9E4E6", "white" => "#FFFFFF", "danger" => "#DC674F", "ok" => "#2E956D", "footer" => "#002F40" }.freeze
   OPTIONS = { "radius" => %w[12px 18px 26px 32px], "font-body" => [ "DM Sans, sans-serif", "Playfair Display, serif", "system-ui, sans-serif" ], "font-heading" => [ "Playfair Display, serif", "DM Sans, sans-serif" ], "motion" => %w[none subtle standard], "button-radius" => %w[12px 26px 999px], "card-radius" => %w[16px 24px 38px], "section-space" => %w[48px 72px 92px 112px], "wave-height" => %w[50px 100px 135px 190px], "wave-speed" => %w[4s 8s 12s 20s], "wave-amplitude" => %w[0px 8px 16px 24px], "wave-angle" => %w[-12deg -6deg 0deg 6deg 12deg], "wave-roundness" => %w[25% 50% 75% 100%], "wave-shape" => %w[wave curve diagonal flat], "shadow" => [ "none", "0 18px 50px rgba(0,73,97,.10)" ] }.freeze
   PAGES = %w[legal home don echange points communaute voyage-solidaire].freeze
-  belongs_to :author, class_name: "User"
+  belongs_to :author, class_name: "User", optional: true
+  validates :author, presence: true, unless: :system_generated?
+  validate :system_homepage
   validates :name, presence: true, length: { maximum: 100 }
   validates :status, inclusion: { in: %w[draft validated published] }
   validate :safe_settings
@@ -33,6 +35,13 @@ class StudioVersion < ApplicationRecord
     end
   end
   private
+  def system_homepage
+    return unless system_generated?
+    unless author_id.nil? && status == "published" && site.keys == [ "pages" ] && site.fetch("pages", {}).keys == [ "home" ] && settings.keys == [ "site" ]
+      errors.add(:base, "La version système est réservée à l’accueil initial")
+    end
+  end
+
   def luminance(hex)
     channels = hex.delete_prefix("#").scan(/../).map { |channel| channel.to_i(16) / 255.0 }.map { |c| c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055)**2.4 }
     channels.zip([ 0.2126, 0.7152, 0.0722 ]).sum { |c, weight| c * weight }

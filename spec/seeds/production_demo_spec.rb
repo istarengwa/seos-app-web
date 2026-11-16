@@ -1,8 +1,8 @@
 require "rails_helper"
 
-RSpec.describe "Démonstration en production" do
+RSpec.describe "Démonstration en développement" do
   it "charge les exemples deux fois sans doublons ni écrasement des comptes ou de l’accueil" do
-    allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("production"))
+    allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("development"))
     expect { load Rails.root.join("db/seeds.rb") }.not_to have_enqueued_job
     expect(User.where(email: %w[membre@seos.test superadmin@seos.test association@seos.test admin@seos.test partenaire@seos.test]).count).to eq(5)
     expect(Listing.where(slug: %w[demo-bricolage demo-numerique demo-jardin]).count).to eq(3)
