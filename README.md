@@ -1,143 +1,239 @@
 # SEOS France
 
-Plateforme d’entraide locale en Rails 8.1. Les livraisons des phases 0 à 7 couvrent profils, annonces, échanges, confiance, Points Services, organisations et outils d’administration.
+SEOS est une application d’entraide locale en **version de développement**, construite avec Rails 8.1. Elle permet de publier des annonces de services, organiser des échanges, suivre les Points Services, parrainer des membres et participer à des actions associatives.
 
-Le [reste à faire et à vérifier](docs/23-reste-a-faire-et-verifier.md) décrit les limites actuelles. Le [dossier de conception](docs/README.md) regroupe les spécifications et suivis de livraison.
+L’administration comprend la modération, les organisations, les quêtes, les témoignages, les chaînes d’entraide, les demandes de confidentialité et un **éditeur visuel V2 basé sur GrapesJS**.
 
-## Démarrer
+## Démarrer en développement
 
-Prérequis : Ruby **3.4.7**, Bundler **2.7.2**, Node **24.8.0**, Yarn Classic **1.22.22**, SQLite 3 et libvips.
+### Prérequis
 
-```bash
+| Outil | Version ou usage |
+| --- | --- |
+| Ruby | 3.4.7, défini dans `.ruby-version` |
+| Bundler | 2.7.2 |
+| Node.js | 24.8.0 |
+| Yarn Classic | 1.22.22 |
+| SQLite 3 | Base locale et tests habituels |
+| libvips | Traitement des images |
+| FFmpeg et FFprobe | Traitement des vidéos |
+
+Depuis la racine du dépôt :
+
+```sh
 bin/setup --skip-server
 bin/dev
 ```
 
-Ouvrir <http://localhost:3000>. `bin/dev` lance Rails et esbuild en watch. `yarn build` reconstruit ensemble le JS, le CSS et les polices locales. Les sorties sont servies et fingerprintées par Propshaft.
+Ouvrir **http://localhost:3000**. `bin/setup` installe les dépendances, prépare la base, charge les données de développement sur une base neuve et compile les assets. `bin/dev` lance Rails et la compilation JavaScript/CSS en continu.
 
-En développement, les e-mails sont écrits dans `tmp/mail/`, sans envoi externe. Après inscription, ouvrir le lien de confirmation contenu dans le fichier. Ce répertoire contient des liens privés et reste ignoré par Git. `bin/setup` nettoie `tmp/`, puis reconstruit les assets.
+Aucun fichier `.env` n’est nécessaire pour utiliser la démonstration locale. Les e-mails sont enregistrés dans **`tmp/mail/`**, sans envoi externe. Après une inscription, ouvrir le lien de confirmation contenu dans le fichier mail.
 
-## Accès
+Pour mettre à jour une base locale existante et compléter ses données de démonstration :
 
-- `/auth/inscription`, `/auth/connexion` : création et connexion ; e-mail confirmé obligatoire.
-- `/annonces` : catalogue, recherche, carte et détails publics.
-- `/compte` : compte personnel, profil, annonces, échanges, favoris et notifications.
-- `/journal`, `/decouvrir/:slug`, `/legal/:slug`, `/contact` : contenus publiés et contact équipe.
-- `/admin` : dashboard ; listes membres et audit selon permission.
-- `/super_admin` : gestion des administrateurs, permissions temporaires et carte publique.
-- `/admin/gestion/:kind` : catégories, restrictions, annonces, profils, échanges, signalements, contenus et contacts, selon permission.
-- `/organisations/:slug/espace` : espace réservé aux memberships actifs d’une organisation vérifiée ; équipe réservée aux propriétaires/gestionnaires.
+```sh
+bin/rails db:migrate
+bin/rails db:seed
+yarn build
+```
+
+Les seeds ne réinitialisent pas les mots de passe ou les contenus déjà personnalisés. Redémarrer Rails après une modification des routes ou de la configuration. La base et les téléversements locaux sont conservés dans `storage/`.
 
 ### Comptes de démonstration
 
-En développement, `bin/setup` crée les données de démonstration lors de l’initialisation d’une base vide. Pour les ajouter à une base existante ou relancer les seeds :
+Connexion : **http://localhost:3000/auth/connexion**. Mot de passe initial commun : **`SeosDemo2026!`**.
 
-```bash
-bin/rails db:seed
+| E-mail | Parcours de démonstration |
+| --- | --- |
+| `membre@seos.test` | Compte personnel et annonces |
+| `association@seos.test` | Responsable de l’association vérifiée « Entraide solidaire — Démo » |
+| `admin@seos.test` | Modération et droits administratifs de démonstration |
+| `partenaire@seos.test` | Membre lié à une organisation en attente de vérification |
+| `superadmin@seos.test` | Administration complète, permissions et éditeur du site |
+
+Ces comptes sont actifs et confirmés. Le jeu local comprend aussi des profils, catégories, annonces illustrées, missions solidaires, quêtes, barèmes de points et contenus de présentation. Il est réservé au développement.
+
+## Utiliser l’application
+
+| Espace | Accès et fonctions |
+| --- | --- |
+| Site public | `/` ; annonces `/annonces` ; communauté `/communaute` ; associations `/associations` ; missions `/voyage-solidaire` |
+| Compte membre | `/compte` : profil, annonces, échanges, favoris, notifications et réglages |
+| Engagement | `/compte/points`, `/compte/engagement`, `/compte/chaines` et `/compte/confiance` |
+| Organisations | `/compte/organisations` : présentation, équipe et missions selon le rôle du membre |
+| Administration | `/admin` : modération, membres, activité et outils accessibles selon les permissions |
+| Éditeur du site | `/admin/site`, réservé au super-admin |
+| Confidentialité | `/preferences-confidentialite` et `/compte/confidentialite` |
+
+Les échanges peuvent se faire sous forme de don, de troc ou de Points Services. Les transferts de points accompagnent la confirmation de l’échange ; les récompenses et les ajustements sont enregistrés dans le portefeuille. Le parrainage actuel utilise un lien personnel permanent, accessible depuis l’espace Confiance.
+
+### Modifier le site avec le Studio V2
+
+1. Se connecter avec le super-admin, ouvrir **Administration → Outils → Éditeur visuel**.
+2. Choisir la page dans le sélecteur du constructeur.
+3. Ajouter une composition ou un élément, puis sélectionner les éléments pour modifier leur texte, leur apparence et leur disposition.
+4. Cliquer sur **Enregistrer** pour conserver un brouillon privé.
+5. Cliquer sur **Vérifier et publier**, relire l’aperçu et confirmer avec **Mettre en ligne**.
+
+Les modifications deviennent publiques après cette dernière confirmation. Les contenus dynamiques, comme les annonces ou les missions, sont alimentés par l’application. Les anciennes URL d’ouverture de l’éditeur redirigent vers la V2.
+
+## Configuration d’environnement
+
+**Le seul modèle de configuration est [`.env.example`](.env.example), à la racine.** Il présente les variables utilisées par le déploiement de production et les options facultatives de l’application.
+
+```sh
+cp .env.example .env
 ```
 
-| Compte | E-mail | Accès |
+Remplacer les valeurs `REPLACE_WITH_…` avant de démarrer le Compose. Le fichier `.env` est ignoré par Git et exclu de l’image Docker.
+
+- **Docker Compose** charge automatiquement `.env` depuis la racine. Un autre fichier peut être choisi avec `--env-file /chemin/seos.env`.
+- **Coolify** reçoit ces variables dans son interface de configuration ; ne pas ajouter les secrets au dépôt.
+- **Rails en développement** utilise les variables exportées dans le terminal. `bin/dev` ne charge pas le `.env` de production. Pour activer une option locale, exporter uniquement les variables utiles avant de le lancer.
+
+### Messagerie et connexion Google
+
+| Usage | Variables |
+| --- | --- |
+| Expéditeur des e-mails de l’application | `SEOS_MAIL_FROM` |
+| Envoi par l’API Gmail en production | `SEOS_MAIL_DELIVERY=gmail`, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN` |
+| Connexion facultative avec Google | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
+| Fond de carte facultatif | `MAP_TILE_URL`, avec les paramètres `{z}`, `{x}`, `{y}` |
+
+L’expéditeur doit être la boîte Gmail autorisée ou l’un de ses alias autorisés. Les identifiants `GMAIL_*` proviennent de Google OAuth. Les mêmes paramètres d’expéditeur sont utilisés pour les notifications et les mails de confirmation/réinitialisation. En développement, l’envoi reste local dans `tmp/mail/` tant que le mode Gmail n’est pas explicitement activé.
+
+Le jeton Gmail doit autoriser `gmail.send` et `gmail.readonly` : le second scope permet de retrouver un message après une réponse réseau incertaine et d’éviter un double envoi. Obtenir un jeton de renouvellement OAuth avec accès hors ligne pour la boîte expéditrice. Pour la connexion des membres, déclarer séparément le callback `https://VOTRE_HOTE/auth/auth/google_oauth2/callback` dans le client OAuth Google.
+
+## Bases et initialisation
+
+| Environnement | Base | Seeds |
 | --- | --- | --- |
-| Membre | `membre@seos.test` | Compte personnel |
-| Super-admin | `superadmin@seos.test` | Administration et gestion des permissions |
-| Responsable d’association | `association@seos.test` | Compte personnel, espace et équipe de l’association |
+| Développement | SQLite | Toutes les données et démonstrations locales |
+| Test | SQLite par défaut ; PostgreSQL pour le contrôle de compatibilité CI | Références métier lorsqu’un test demande les seeds |
+| Production | PostgreSQL | Uniquement l’accueil publié et ses dix sections de base |
 
-Mot de passe initial des trois comptes : **`SeosDemo2026!`**. Ils sont actifs et déjà confirmés ; connexion sur `/auth/connexion`, sans e-mail à valider.
+`db/seeds.rb` sélectionne le fichier approprié dans `db/seeds/`. Au premier `db:prepare` d’une nouvelle production, l’accueil est initialisé dans une transaction. Un marqueur `SeedRun` empêche toute nouvelle création : un redémarrage ou même un `db:seed` manuel ne remplace ni ne recrée un accueil déjà initialisé, y compris après sa suppression.
 
-L’association **Entraide solidaire — Démo** est vérifiée. Son responsable est un membre avec une adhésion propriétaire active ; son espace se trouve sur `/organisations/entraide-solidaire-demo/espace` et est accessible depuis `/compte`.
+Les bases existantes sont préservées lors de la mise à niveau. Aucun compte, annonce, quête, barème ou document légal de démonstration n’est créé par les seeds de production.
 
-Pour la présentation cliente, les identités de démonstration sont créées en développement et en production ; elles restent exclues en test. Les seeds ajoutent aussi les profils, quatre catégories, trois annonces et des pages explicatives dans ces deux environnements. Les critères d’avis et le flag carte sont des références chargées dans tous les environnements. Elles peuvent être relancées sans doublons et conservent les mots de passe, rôles, statuts et données déjà modifiés.
+Le schéma standard est **`db/schema.rb`**. Les migrations fonctionnent sur SQLite et PostgreSQL sans renommage des fichiers historiques. Les règles métier sont écrites en Ruby, avec transactions et verrouillages ; les clés étrangères, index uniques et contraintes simples restent dans la base. Les écritures SQL directes et les méthodes qui ignorent les callbacks ne bénéficient pas des protections des modèles Rails.
 
-### Initialisation manuelle du super-admin
+## Vérifier les changements
 
-Dans un environnement sans compte de démonstration, pour initialiser le premier super-admin, créer et confirmer un compte puis exécuter :
-
-```bash
-EMAIL=adresse-du-compte@example.test bin/rails seos:bootstrap_super_admin
-```
-
-La commande refuse de s’exécuter si un super-admin existe déjà. Elle journalise l’initialisation et révoque les sessions du compte. Reconnectez-vous ensuite. Un changement de rôle ultérieur passe par le panneau super-admin et un motif obligatoire.
-
-## Vérifier
-
-```bash
+```sh
 yarn build
 yarn build:check
 bundle exec rspec
+bin/check-ledger-concurrency
 bin/check-exchange-concurrency
+bin/rails zeitwerk:check
 bin/rubocop
-bin/brakeman --no-pager
-bin/bundler-audit
-yarn audit
 ```
 
-`bin/ci` regroupe setup, assets, autoload, analyses et RSpec. La suite couvre les requêtes HTTP, les modèles, les services, les policies, les parcours Chrome, les captures et l’accessibilité. Un build absent, périmé ou altéré fait échouer RSpec. Les générateurs produisent des fichiers `spec/`, pas de suite Minitest.
-
-Chrome for Testing **151.0.7922.77** est verrouillé dans `.chrome-version`. Selenium peut l’installer ; pour utiliser une installation existante, définir `CHROME_BIN` et `CHROMEDRIVER_BIN`. Les captures visuelles supposent Linux et le navigateur verrouillé. La CI installe explicitement Chrome et son driver. Elle archive couverture, captures/diffs et rapport JUnit.
-
-La couverture de la suite complète exige **95 % de lignes et 90 % de branches**. Pour travailler sur une seule spec : `COVERAGE=0 bundle exec rspec spec/requests/authentication_spec.rb` ; ce réglage ne remplace pas la validation complète.
-
-Les références PNG initiales du **socle** sont dans `spec/fixtures/visual/foundations`. Elles couvrent accueil et connexion aux sept largeurs prévues. Elles ne constituent pas encore une comparaison exhaustive à la maquette. Aucune référence existante n’est remplacée par les tests. Pour produire des candidats à examiner :
-
-```bash
-COVERAGE=0 CAPTURE_VISUAL_CANDIDATES=1 bundle exec rspec --tag visual
-```
-
-Les candidats restent dans `tmp/screenshots/`. Leur adoption demande une revue explicite du rendu et du diff ; le mode capture est interdit en CI.
-
-## Base et sécurité
-
-Le schéma canonique est `db/structure.sql` : il conserve aussi les triggers SQLite qui interdisent de modifier/supprimer l’audit. Les migrations ajoutent clés étrangères, unicités et contraintes de rôles/statuts. Les données de développement restent dans `storage/`.
-
-Les sessions ne sont pas interrompues pour inactivité ; leur durée maximale reste de 12 heures après connexion. L’administration et le Studio ne demandent pas de confirmation périodique du mot de passe. Une confirmation récente reste requise pour les demandes et téléchargements de données personnelles et l’association d’un compte Google. Les mots de passe changés et les changements de rôle révoquent les sessions. Les jetons de session sont stockés sous forme de condensat ; les agents utilisateurs sont résumés sans conservation de l’IP.
-
-Les images passent par un contrôle MIME/taille, réencodage et retrait des métadonnées, puis une route autorisée `/medias/:id`. Les routes génériques Active Storage restent fermées. La carte publique utilise Leaflet dans un bundle distinct, uniquement lorsque le flag est actif. `MAP_TILE_URL` remplace le fond OSM par défaut. Aucun OAuth, analytics ou Stripe n’est chargé.
-
-## Suite du chantier
-
-La [phase 4 — Points Services](docs/18-suivi-phase-4.md) fournit `/compte/points`, `/points-services` et `/admin/points` : registre en partie double, transfert à la seconde confirmation, accueil de 30 PS à valider, récompenses avec preuves, ajustements prévisualisés et barèmes versionnés. Les seeds préparent les références sans créditer les comptes. `PointMaintenanceJob` assure le rattrapage via le worker ; les quêtes et chaînes complètes sont désormais raccordées par la phase 5.
-
-La [phase 3](docs/17-suivi-phase-3.md) ajoute le parrainage, le moteur Trust versionné, les recours humains et la revue interne des signaux. Entrées : `/compte/confiance`, `/confiance`, `/admin/confiance`. Les seeds préparent `v1.0` en brouillon : simulation, seconde approbation et calcul en ombre précèdent toute activation publique. Le registre des points est désormais fourni par la phase 4. Redémarrer `bin/dev` après migration pour recharger routes et filtres de paramètres. Les recalculs nécessitent les jobs ; `bin/rails runner 'TrustMaintenanceJob.perform_now'` permet un passage local explicite.
-
-Le [Studio admin](docs/24-studio-mon-site-et-kit-maquette.md) offre un accueil commun sur `/admin`, avec des menus selon les permissions. Le super admin dispose de **Personnalisation** : création guidée de pages, contenu par parties, haut et bas du site, images et kit UI/UX issu de la maquette. Un aperçu et un récapitulatif précèdent la mise en ligne. Les validations de lancement et les compléments métier restent suivis dans la checklist, notamment les CGU versionnées et la politique d’âge.
-
-La [phase 5 — Engagement communautaire](docs/19-suivi-phase-5.md) ajoute les quêtes, Top annonces, témoignages écrits/vidéo et chaînes d’entraide : `/compte/engagement`, `/compte/chaines`, `/temoignages`, `/admin/engagement`. Le module Stripe de `/admin/soutien` reste désactivé par défaut. FFmpeg et FFprobe sont nécessaires au traitement vidéo et sont inclus dans le Dockerfile.
-
-La [phase 6 — Organisations, Voyage et partenariats](docs/20-suivi-phase-6.md) ajoute `/compte/organisations`, `/compte/candidatures`, `/associations`, `/voyage-solidaire`, `/partenaires` et `/admin/organisations`. Les seeds préparent une mission et un partenariat en brouillon pour l’association de démonstration. Les annonces monde restent publiées exclusivement par le super-admin.
-
-### Phase 7 : confidentialité et pilotage
-
-Après `bundle install`, `bin/rails db:migrate`, `bin/rails db:seed` et `yarn build`, redémarrer l’application et les workers. Nouveaux espaces : `/compte/confidentialite`, `/admin/confidentialite`, `/admin/operations`, `/admin/studio` et `/preferences-confidentialite`.
-
-Les comptes locaux `admin@seos.test` et `partenaire@seos.test` complètent les trois comptes existants, avec `SeosDemo2026!`. L’admin reçoit des droits de démonstration limités à 30 jours ; le partenaire possède une organisation en attente de revue. Ces comptes sont également créés en production pour la présentation cliente.
-
-Voir [le suivi de phase 7](docs/21-suivi-phase-7.md) et [le guide d’exploitation](docs/22-exploitation-et-recette.md) pour Google/Gmail, sauvegardes, recette et limites de lancement. Le logiciel livré ne vaut pas validation juridique des durées de conservation ou de l’ouverture au public.
-
-### Démonstration sur Coolify
-
-Après déploiement de cette version, dans le terminal du conteneur Rails :
+RSpec couvre les modèles, services, requêtes HTTP et parcours navigateur. **Compiler les assets avant les tests** : un build absent ou périmé est refusé. Pour travailler sur un groupe ciblé sans appliquer les seuils globaux de couverture :
 
 ```sh
-cd /rails
-RAILS_ENV=production bin/rails db:seed
+COVERAGE=0 bundle exec rspec spec/requests/studio_builder_v2_spec.rb
 ```
 
-Le jeu de démonstration inclut les cinq comptes ci-dessus, les annonces illustrées,
-l’association, les missions Voyage et la maquette de l’accueil. Les mots de passe
-initiaux sont `SeosDemo2026!` ; les comptes existants ne sont pas réinitialisés.
-Les seeds peuvent être relancées et conservent un accueil déjà personnalisé.
-Le démarrage Docker exécute `db:prepare` : sur une base neuve, Rails charge aussi
-les seeds automatiquement.
+Les tests navigateur utilisent Chrome for Testing et ChromeDriver, à la version inscrite dans `.chrome-version`. Selenium peut les installer ; `CHROME_BIN` et `CHROMEDRIVER_BIN` permettent d’utiliser une installation existante. Les captures et rapports restent dans `tmp/`. Les références visuelles et leur procédure de revue sont décrites dans `spec/fixtures/visual/foundations/README.md`.
 
-Le volume `/rails/storage` conserve la base et les médias après redéploiement.
-Redéployer l’image ne retire donc pas la démonstration. Avant l’ouverture réelle,
-retirer l’activation de ces seeds en production et préparer une base de production
-sans les comptes et contenus fictifs.
+`bin/ci` regroupe les vérifications locales. Les workflows GitHub vérifient aussi PostgreSQL, les migrations et le Compose. Les seuils de couverture sont définis dans `spec/spec_helper.rb` ; les audits de dépendances et `bin/brakeman` complètent les tests fonctionnels.
 
-Les seeds suspendent tous les envois de jobs pendant leur chargement : aucune
-récompense, notification ni analyse asynchrone de média n’est déclenchée par les
-exemples. Cette suspension cesse à la fin du chargement, même en cas d’erreur.
-L’accueil complet (11 sections) est chargé en fin de parcours : après un échec,
-relancer `bin/rails db:seed` termine les éléments manquants sans doublons.
-Cette indépendance des seeds ne remplace pas la préparation de Solid Queue pour
-les actions normales des utilisateurs.
+## Production avec Docker Compose et Coolify
+
+Le [`docker-compose.yml`](docker-compose.yml) construit le code du dépôt et regroupe tous les services dans **une seule application Coolify**, sans `include:`.
+
+| Service | Fonction |
+| --- | --- |
+| `postgres` | PostgreSQL 17 ; bases principale, cache, queue et cable |
+| `migrate` | `bin/rails db:prepare`, puis arrêt normal avec code 0 |
+| `web` | Rails/Puma derrière Thruster, port interne 80 |
+| `jobs` | Solid Queue, traitement asynchrone et tâches planifiées |
+
+Solid Cache et Solid Cable utilisent PostgreSQL. Les services et dépendances actuels ne nécessitent ni Redis ni Sidekiq. Le worker charge les tâches de `config/recurring.yml` : confidentialité, points, confiance, expiration des annonces et nettoyage des tâches terminées. Ne pas activer un second worker Solid Queue dans Puma avec cette configuration.
+
+### Préparer les variables
+
+Générer séparément le mot de passe PostgreSQL, `SECRET_KEY_BASE` et les trois clés `ACTIVE_RECORD_ENCRYPTION_*`, par exemple avec cinq exécutions de :
+
+```sh
+openssl rand -hex 32
+```
+
+Conserver ces valeurs entre les redéploiements et les sauvegarder séparément des données. Les clés de chiffrement d’origine sont nécessaires à la restauration des données chiffrées. `RAILS_MASTER_KEY` est nécessaire uniquement si des secrets sont lus dans les credentials Rails chiffrés.
+
+Renseigner l’hôte public sans protocole ni chemin, l’expéditeur autorisé et les trois identifiants Gmail. Ne pas définir `DATABASE_URL` pour cette stack : les quatre bases sont configurées avec les variables `POSTGRES_*`. Modifier `POSTGRES_PASSWORD` ne change pas le mot de passe d’un rôle PostgreSQL déjà créé dans un volume existant.
+
+### Déployer dans Coolify
+
+1. Créer une **Application depuis le dépôt Git**, sélectionner la branche et choisir le build pack **Docker Compose**.
+2. Définir **Base Directory** sur `/` et **Docker Compose Location** sur `/docker-compose.yml`. Garder le mode Raw Compose désactivé.
+3. Recharger la configuration et vérifier les quatre services et les deux volumes persistants.
+4. Saisir les variables de `.env.example` dans Coolify, en remplaçant toutes les valeurs d’exemple.
+5. Affecter le domaine HTTPS au seul service **web**, avec le port interne **80** : par exemple `https://seos.example.org:80` dans le champ Coolify. L’URL publique reste `https://seos.example.org`.
+6. Déployer. PostgreSQL devient sain, `migrate` termine avec code 0, puis `web` et `jobs` démarrent.
+
+Le proxy Coolify termine HTTPS. `SEOS_ASSUME_SSL=true` configure Rails pour cet accès. Les bases et le worker ne publient aucun port sur l’hôte.
+
+Pour lancer la même stack hors Coolify, depuis la racine avec un `.env` rempli :
+
+```sh
+docker compose config --quiet
+docker compose up --build -d
+```
+
+Un proxy HTTPS ou un override de publication du port web est nécessaire pour y accéder. Pour un essai local en HTTP, définir aussi `SEOS_ASSUME_SSL=false`.
+
+### Premier compte et vérifications
+
+La production ne contient aucun compte de démonstration. Créer un compte par inscription, confirmer son e-mail, puis initialiser le premier super-admin depuis le conteneur :
+
+```sh
+docker compose exec -e EMAIL=adresse-du-compte@example.org web bin/rails seos:bootstrap_super_admin
+```
+
+Cette commande refuse de s’exécuter si un super-admin existe déjà. Elle journalise l’action et révoque les sessions du compte : se reconnecter ensuite.
+
+```sh
+docker compose ps -a
+docker compose logs migrate web jobs
+curl --fail https://seos.example.org/up
+docker compose exec web bin/rails runner 'puts ActiveRecord::Base.connection.adapter_name'
+docker compose exec jobs bin/rails runner 'p SolidQueue::Process.pluck(:kind, :last_heartbeat_at)'
+docker compose exec jobs bin/rails runner 'p SolidQueue::RecurringTask.pluck(:key)'
+```
+
+Vérifier PostgreSQL, une réponse HTTP 200, des processus actifs et les cinq tâches récurrentes, puis une inscription avec confirmation et un parcours de sauvegarde/publication V2. L’initialisation vise une nouvelle production PostgreSQL ; aucune ancienne base SQLite n’est importée automatiquement.
+
+### Persistance et sauvegardes
+
+- `postgres_data` conserve les quatre bases PostgreSQL.
+- `app_storage`, partagé par le web et le worker, conserve les téléversements et fichiers privés.
+
+Conserver l’identité de ces volumes lors des redéploiements. Ne pas utiliser `docker compose down -v` pour une mise à jour.
+
+`bin/backup create-production` exporte les quatre bases avec `pg_dump`, copie les fichiers et crée un manifeste SHA-256. Arrêter les écritures et le worker pendant la sauvegarde. Sur l’hôte, préparer un dossier `backups` accessible à l’UID/GID **1000**, utilisé par l’image Rails, puis :
+
+```sh
+docker compose stop web jobs
+docker compose run --rm --no-deps -e SEOS_WRITERS_STOPPED=1 \
+  -v "$PWD/backups:/backups" web \
+  bin/backup create-production /rails/storage /backups/instantane
+docker compose start web jobs
+```
+
+Choisir un nouveau dossier pour chaque instantané et copier les sauvegardes hors de l’hôte. Les commandes suivantes vérifient une sauvegarde et préparent une copie de restauration sans écraser une base active :
+
+```sh
+bin/backup verify DOSSIER
+bin/backup restore SOURCE NOUVEAU_DOSSIER
+```
+
+Pour restaurer réellement : créer quatre bases vides compatibles, charger chaque archive `primary.dump`, `cache.dump`, `queue.dump` et `cable.dump` avec `pg_restore --no-owner --no-privileges --dbname=BASE ARCHIVE.dump`, restaurer le dossier `storage` avec l’UID/GID 1000 et remettre les secrets d’origine. Relancer ensuite `db:prepare`, le web et le worker. Le marqueur d’initialisation est sauvegardé avec la base principale.
+
+Le client PostgreSQL est inclus dans l’image. Les commandes SQLite de `bin/backup` restent disponibles pour les données locales. Les migrations qui retirent les anciennes protections SQL sont irréversibles : garder une sauvegarde avant une mise à niveau réelle. Une montée de version majeure de PostgreSQL demande une migration dédiée.
+
+## Documentation complémentaire
+
+Les documents de conception et suivis de livraison se trouvent dans [`docs/`](docs/README.md). Le présent README décrit les commandes et parcours de la version actuelle. Les réglages métier, contenus légaux et identifiants des services externes doivent être renseignés pour l’instance exploitée.

@@ -1,4 +1,9 @@
-# Studio admin — Éditeur visuel
+# Historique du Studio visuel V1
+
+> Depuis le 16 novembre 2026, seule la V2 (GrapesJS) est accessible. L’entrée du Studio
+> et les anciens liens `/visual` ouvrent la V2 ; sauvegarde, aperçu et publication
+> conservent leurs services partagés. Ce document décrit l’ancienne interface V1.
+> Pour la production, voir le [guide Coolify](../README.md#production-avec-docker-compose-et-coolify).
 
 ## Ouvrir l’éditeur
 
