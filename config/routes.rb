@@ -77,6 +77,7 @@ Rails.application.routes.draw do
     resource :reauthentication, path: "verification", only: [ :new, :create ]
   end
   namespace :admin do
+    resources :features, path: "fonctionnalites", only: [ :index, :create ]
     resources :operations, only: [ :index, :create ] do
       match :user, via: [ :get, :post ], on: :member
     end

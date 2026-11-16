@@ -1,5 +1,6 @@
 class Missions
   def self.save!(mission:, actor:, attributes:, photos: [])
+    AppFeatures.require!("voyage")
     raise Pundit::NotAuthorizedError unless (actor.super_admin? && actor.permission?("missions.manage")) || OrganizationPolicy.new(actor, mission.organization).edit_content?
     raise Exchanges::Invalid, "Une association vérifiée est nécessaire." unless mission.organization.association? && mission.organization.verified?
     mission.with_lock do
@@ -17,6 +18,7 @@ class Missions
   end
 
   def self.transition!(mission:, actor:, status:, reason:)
+    AppFeatures.require!("voyage")
     case status
     when "pending_review"
       raise Pundit::NotAuthorizedError unless OrganizationPolicy.new(actor, mission.organization).edit_content?
@@ -38,6 +40,7 @@ class Missions
   end
 
   def self.apply!(mission:, actor:, message:, starts_on:, ends_on:)
+    AppFeatures.require!("voyage")
     Chains.active!(actor)
     mission.with_lock do
       raise Exchanges::Invalid, "Cette mission n’accepte pas de candidature." unless mission.publicly_visible?
@@ -57,6 +60,7 @@ class Missions
   end
 
   def self.decide!(application:, actor:, status:, reason:)
+    AppFeatures.require!("voyage")
     mission = application.volunteer_mission
     raise Pundit::NotAuthorizedError unless (status == "withdrawn" && application.user_id == actor.id) || application.manageable_by?(actor)
     raise Exchanges::Invalid, "Décision inconnue." unless %w[accepted rejected withdrawn].include?(status)
@@ -85,6 +89,7 @@ class Missions
   end
 
   def self.message!(application:, actor:, body:, key:)
+    AppFeatures.require!("voyage")
     Chains.active!(actor)
     raise Pundit::NotAuthorizedError unless application.visible_to?(actor)
     application.volunteer_mission.with_lock do

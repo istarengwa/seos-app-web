@@ -2,7 +2,7 @@ module NotificationsHelper
   def notification_page_read_token
     return unless current_user && controller_path != "account/notifications"
     categories = Notification::CATEGORIES.keys.select { |category| notification_category_path(category) == request.path }
-    scope = current_user.notifications.unread.where(category: categories)
+    scope = current_user.notifications.feature_visible.unread.where(category: categories)
     # Conversation-specific notices are read only in their own conversation.
     scope = scope.where.not(category: %w[messages reviews]).or(scope.where(category: %w[messages reviews], service_request_id: nil))
     review_ids = []
@@ -18,7 +18,7 @@ module NotificationsHelper
   end
 
   def notification_counts
-    @notification_counts ||= current_user ? current_user.notifications.unread.group(:category).count : {}
+    @notification_counts ||= current_user ? current_user.notifications.feature_visible.unread.group(:category).count : {}
   end
 
   def notification_badge(category, extra_class: nil)

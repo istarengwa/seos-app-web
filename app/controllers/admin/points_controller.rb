@@ -4,6 +4,7 @@ module Admin
 
     def index
       @claims = PointRewardClaim.includes(:user, :point_rule_version).order(id: :desc).limit(100)
+      @claims = @claims.select { |claim| AppFeatures.proof_available?(claim.kind) } unless current_user.super_admin?
     end
 
     def create

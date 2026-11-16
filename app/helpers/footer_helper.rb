@@ -25,6 +25,6 @@ module FooterHelper
       end
     end
     removed = (site_version&.deleted_pages || []).flat_map { |slug| SiteDesign.page_paths(slug) }
-    groups.transform_values { |links| links.map { |label, url| [ label, unified_legal_url(url) ] }.reject { |_label, url| removed.include?(url.split(/[?#]/).first) || (url == volunteer_missions_path && !FeatureFlag.voyage_enabled?) } }
+    groups.transform_values { |links| links.map { |label, url| [ label, unified_legal_url(url) ] }.reject { |_label, url| removed.include?(url.split(/[?#]/).first) || !app_feature_link_visible?(url) } }
   end
 end

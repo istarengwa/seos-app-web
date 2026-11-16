@@ -52,11 +52,7 @@ module Admin
       when "flag"
         raise Pundit::NotAuthorizedError unless current_user.super_admin?
         raise Exchanges::Invalid, "Paramètre inconnu." unless params[:key] == "voyage_enabled"
-        FeatureFlag.transaction do
-          flag = FeatureFlag.find_or_initialize_by(key: params[:key])
-          flag.update!(enabled: params[:enabled] == "1")
-          AuditLog.create!(actor: current_user, target: flag, action: "organization.flag", reason: params[:reason])
-        end
+        AppFeatures.change!(actor: current_user, key: "voyage", enabled: params[:enabled] == "1", reason: params[:reason], expected: AppFeatures.digest)
       else
         raise Exchanges::Invalid, "Action inconnue."
       end
@@ -70,7 +66,9 @@ module Admin
 
     def prepare_sections
       @sections = { "organizations" => "Demandes de structures" }
+      @sections.delete("organizations") unless current_user.super_admin? || AppFeatures.enabled?("associations")
       @sections["missions"] = "Missions" if current_user.permission?("missions.manage")
+      @sections.delete("missions") unless current_user.super_admin? || AppFeatures.enabled?("voyage")
       @sections["settings"] = "Parcours publics" if current_user.super_admin?
     end
 

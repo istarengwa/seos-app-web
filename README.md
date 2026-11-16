@@ -73,6 +73,16 @@ La **Vue d’ensemble** de l’administration comporte les onglets **Activité**
 
 Les moteurs de recherche et robots d’IA peuvent parcourir les pages publiques par défaut. Cette configuration est définie dans le code ; les espaces privés et les aperçus administratifs restent exclus.
 
+### Activer ou désactiver des fonctionnalités
+
+Le super administrateur dispose de **Fonctionnalités** dans le menu Outils. Associations, quêtes, chaînes, parrainage, témoignages, mises en avant, Voyage solidaire, carte, journal et connexion Google peuvent être activés ou désactivés séparément. Chaque changement passe par une prévisualisation de ses conséquences, un motif et une confirmation ; l’historique conserve l’auteur et la date.
+
+La désactivation masque les pages, menus et blocs concernés, bloque les formulaires et les accès directs, et suspend leurs notifications. Les données et leur statut sont conservés. Les dossiers restent consultables en lecture seule par le super administrateur. Le Voyage solidaire dépend des associations : désactiver les associations le rend indisponible tout en conservant son propre réglage. Les dates d’expiration continuent de s’appliquer et les anciennes notifications ne sont pas renvoyées à la réactivation.
+
+Les annonces, les échanges et le moteur de Points Services sont toujours disponibles. Les soldes, écritures, barèmes et calculs de points restent inchangés ; les récompenses déjà prises en charge par ce moteur continuent de suivre ses règles. La connexion Google exige les identifiants du serveur ; sa désactivation demande le mot de passe SEOS du super administrateur et ne coupe pas l’envoi Gmail.
+
+Dans le Studio, **Avancé → Afficher avec une fonctionnalité** permet d’associer un élément libre à un module. Les compositions prédéfinies concernées sont déjà associées. Un bloc désactivé reste dans l’éditeur avec un repère, mais disparaît du rendu public et de la vérification avant publication, sans réécrire la composition enregistrée.
+
 ### Modifier le site avec le Studio V2
 
 1. Se connecter avec le super-admin, ouvrir **Administration → Outils → Éditeur visuel**.

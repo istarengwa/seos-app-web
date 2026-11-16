@@ -1,5 +1,6 @@
 class Chains
   def self.create!(actor:, name:)
+    AppFeatures.require!("chains")
     active!(actor)
     HelpChain.create!(creator: actor, name: name, chain_rule_version: ChainRuleVersion.current || raise(Exchanges::Invalid, "Aucun barème de chaîne publié."), point_rule_version: Points::Rewards.rule!)
   end
@@ -9,6 +10,7 @@ class Chains
   end
 
   def self.invite!(chain:, actor:, description:)
+    AppFeatures.require!("chains")
     active!(actor)
     chain.with_lock do
       raise Pundit::NotAuthorizedError unless chain.next_provider.id == actor.id
@@ -25,6 +27,7 @@ class Chains
   end
 
   def self.confirm!(service:, actor:)
+    AppFeatures.require!("chains")
     active!(actor)
     chain = service.help_chain
     chain.with_lock do
@@ -64,6 +67,7 @@ class Chains
   end
 
   def self.moderate!(chain:, actor:, status:, reason:)
+    AppFeatures.require!("chains")
     raise Pundit::NotAuthorizedError unless actor.permission?("community.manage")
     raise Exchanges::Invalid, "Statut inconnu." unless %w[active closed disputed].include?(status)
     chain.with_lock do
@@ -74,6 +78,7 @@ class Chains
   end
 
   def self.rule!(version:, actor:, action:, reason:)
+    AppFeatures.require!("chains")
     raise Pundit::NotAuthorizedError unless actor.super_admin? && actor.permission?("community.rules")
     version.with_lock do
       version.validate!

@@ -198,6 +198,16 @@ if (root) {
   })
   installControls(editor, root)
   installLegalEditor(root, config, editor, refreshDirty)
+  const featureBinding = root.querySelector("[data-studio-feature-binding]")
+  Object.entries(config.featureBindings).forEach(([key, label]) => featureBinding.add(new Option(label, key)))
+  editor.on("component:selected", component => { featureBinding.value = component.getAttributes()["data-app-feature"] || "" })
+  featureBinding.addEventListener("change", () => {
+    const component = editor.getSelected()
+    if (!component) return
+    if (featureBinding.value) component.addAttributes({ "data-app-feature": featureBinding.value })
+    else component.removeAttributes("data-app-feature")
+  })
+
   root.querySelectorAll("[data-device]").forEach(button => button.addEventListener("click", () => {
     editor.setDevice(button.dataset.device)
     root.querySelectorAll("[data-device]").forEach(item => item.classList.toggle("is-active", item === button))

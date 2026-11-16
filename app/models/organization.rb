@@ -9,7 +9,7 @@ class Organization < ApplicationRecord
   validates :public_location, :legal_name, :registration_number, length: { maximum: 150 }
   validates :legal_email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validate -> { validate_public_text(:name, :description, :public_location) }
-  def publicly_visible? = verified? && published_at.present?
+  def publicly_visible? = (kind != "association" || AppFeatures.enabled?("associations")) && verified? && published_at.present?
   enum :kind, { association: "association", company: "company", micro_company: "micro_company", institution: "institution", collective: "collective" }, validate: true
   validates :request_kind, inclusion: { in: %w[community_mission] }, allow_nil: true
   validate on: :create do

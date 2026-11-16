@@ -19,6 +19,20 @@ module AccountNavigationHelper
         [ "Données personnelles", account_privacy_path, %w[account/privacy] ]
       ] ]
     ]
+    definitions.each do |_label, entries|
+      entries.reject! { |text, _path, _controllers| text == "Associations" && !AppFeatures.enabled?("associations") }
+      community = entries.find { |text, _path, _controllers| text == "Quêtes & chaînes" }
+      next unless community
+      quests, chains = AppFeatures.enabled?("quests"), AppFeatures.enabled?("chains")
+      if quests || chains
+        community[0] = quests && chains ? "Quêtes & chaînes" : (quests ? "Quêtes" : "Chaînes d’entraide")
+        community[1] = quests ? account_community_path : account_chains_path
+      elsif AppFeatures.enabled?("highlights")
+        community[0] = "Mes mises en avant"
+      else
+        entries.delete(community)
+      end
+    end
     definitions.map do |label, entries|
       { label: label, links: entries.map { |text, path, controllers| { label: text, path: path, category: notification_category_for(controllers), active: controllers.include?(controller_path) } } }
     end

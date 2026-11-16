@@ -5,15 +5,20 @@ module Admin
       raise Pundit::NotAuthorizedError unless %w[community.read community.manage community.rules].any? { |permission| current_user.permission?(permission) }
     end
     def index
-      @tab = params[:tab].presence_in(TABS) || "quests"
+      @available_tabs = TABS.select { |tab| current_user.super_admin? || (AppFeatures::COMMUNITY_TABS[tab] && AppFeatures.enabled?(AppFeatures::COMMUNITY_TABS[tab])) }
+      @tab = params[:tab].presence_in(@available_tabs) || @available_tabs.first
       unless current_user.permission?("community.read") || current_user.permission?("community.manage")
         @tab = "settings"
         @achievements = @records = @tops = @testimonials = @chains = []
         @quest_total = @quest_visible_total = @quest_archived_total = @quest_manual_total = 0
         return
       end
+      raise ActiveRecord::RecordNotFound unless @tab
+      feature = AppFeatures::COMMUNITY_TABS[@tab]
+      @disabled_feature = feature if feature && !AppFeatures.enabled?(feature)
       load_quests
       @records = UserAchievement.includes(:achievement).order(id: :desc).limit(30)
+      @records = @records.select { |record| AppFeatures.quest_available?(record.achievement) } unless current_user.super_admin?
       @tops = TopListingRequest.includes(:listing).order(id: :desc).limit(30)
       @testimonials = Testimonial.order(id: :desc).limit(30)
       @chains = HelpChain.order(id: :desc).limit(30)

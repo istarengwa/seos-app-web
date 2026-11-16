@@ -13,5 +13,5 @@ class Testimonial < ApplicationRecord
   validates :display_name_snapshot, :public_location_snapshot, length: { maximum: 100 }
   validates :transcript, presence: true, if: -> { kind == "video" }
   validate -> { validate_public_text(:quote, :transcript, :display_name_snapshot, :public_location_snapshot) }
-  def publicly_visible? = status == "published" && removed_at.nil? && consented_at.present? && user.active? && user.confirmed?
+  def publicly_visible? = AppFeatures.enabled?("testimonials") && status == "published" && removed_at.nil? && consented_at.present? && user.active? && user.confirmed?
 end

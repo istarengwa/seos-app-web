@@ -1,5 +1,6 @@
 class OrganizationWorkflow
   def self.create!(actor:, attributes:)
+    AppFeatures.require!("associations")
     Chains.active!(actor)
     Organization.transaction do
       organization = Organization.create!({ request_kind: "community_mission", kind: "association" }.merge(attributes.symbolize_keys.except(:request_kind, :kind)).merge(status: "pending"))
@@ -10,6 +11,7 @@ class OrganizationWorkflow
   end
 
   def self.update!(organization:, actor:, attributes:, logo: nil)
+    AppFeatures.require!("associations")
     policy = OrganizationPolicy.new(actor, organization)
     raise Pundit::NotAuthorizedError unless policy.workspace?
     raise Pundit::NotAuthorizedError if attributes.keys.map(&:to_s).intersect?(%w[legal_name legal_email registration_number]) && !policy.owner?
@@ -23,6 +25,7 @@ class OrganizationWorkflow
   end
 
   def self.invite!(organization:, actor:, email:, role:)
+    AppFeatures.require!("associations")
     policy = OrganizationPolicy.new(actor, organization)
     raise Pundit::NotAuthorizedError unless policy.manage_team? && (role == "editor" || (policy.owner? && role == "manager"))
     token = SecureRandom.urlsafe_base64(24)
@@ -35,6 +38,7 @@ class OrganizationWorkflow
   end
 
   def self.accept!(invitation:, actor:)
+    AppFeatures.require!("associations")
     Chains.active!(actor)
     invitation.organization.with_lock do
       invitation.reload
@@ -51,6 +55,7 @@ class OrganizationWorkflow
   end
 
   def self.membership!(membership:, actor:, role:, status:)
+    AppFeatures.require!("associations")
     organization = membership.organization
     policy = OrganizationPolicy.new(actor, organization)
     raise Pundit::NotAuthorizedError unless policy.manage_team?
@@ -67,6 +72,7 @@ class OrganizationWorkflow
   end
 
   def self.recover_owner!(organization:, actor:, user:, reason:)
+    AppFeatures.require!("associations")
     raise Pundit::NotAuthorizedError unless actor.super_admin? && actor.permission?("organizations.manage")
     Chains.active!(user)
     organization.with_lock do
@@ -77,6 +83,7 @@ class OrganizationWorkflow
   end
 
   def self.review!(organization:, actor:, status:, reason:, kind: nil)
+    AppFeatures.require!("associations")
     raise Pundit::NotAuthorizedError unless actor.permission?("organizations.manage")
     raise Pundit::NotAuthorizedError if kind.present? && !actor.super_admin?
     organization.with_lock do

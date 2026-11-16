@@ -1,0 +1,54 @@
+<% content_for :title, "Fonctionnalités" %>
+<div class="admin-console feature-settings-page" data-turbo="false" data-controller="workspace-tabs" data-workspace-tabs-default-value="<%= @definition ? @definition[:group] : 'community' %>">
+  <%= render "admin/shared/heading", title: "Fonctionnalités", description: "Choisissez les modules disponibles sur le site. Désactiver un module masque ses accès et bloque ses actions ; ses données et les compositions du Studio sont conservées." %>
+  <p class="notice">Les annonces, les échanges et le moteur de Points Services restent toujours disponibles.</p>
+  <% if @feature_error %><p role="alert" class="alert"><%= @feature_error %></p><% end %>
+  <% if @confirmation %>
+    <section class="card feature-confirmation" aria-labelledby="feature-confirmation-title">
+      <header class="feature-confirmation-heading">
+        <span class="eyebrow">Vérification avant application</span>
+        <h2 id="feature-confirmation-title"><%= @enabled ? "Activer" : "Désactiver" %> « <%= @definition[:label] %> » ?</h2>
+        <p><strong>Motif :</strong> <%= @reason %></p>
+      </header>
+      <dl class="feature-confirmation-impact"><% AppFeatures.impact(@key).each do |label, count| %><div><dt><%= label %></dt><dd><%= count %></dd></div><% end %></dl>
+      <% dependents = AppFeatures::DEFINITIONS.select { |_key, item| item[:dependencies].include?(@key) } %>
+      <% if !@enabled && dependents.any? %><p class="feature-confirmation-dependency"><strong>Également indisponible :</strong> <%= dependents.values.map { |item| item[:label] }.join(", ") %>. Son réglage est conservé.</p><% end %>
+      <% if @enabled && @definition[:dependencies].any? %><p class="feature-confirmation-dependency"><strong>Dépend de :</strong> <%= @definition[:dependencies].map { |parent| AppFeatures.definition(parent)[:label] }.join(", ") %>. Le module sera disponible quand ces dépendances seront actives.</p><% end %>
+      <p class="feature-confirmation-note">Aucune donnée supprimée. Les dossiers restent consultables par le super administrateur. À la réactivation, les statuts et les dates restent applicables ; les anciennes notifications ne sont pas renvoyées.</p>
+      <%= form_with url: admin_features_path, class: "feature-confirmation-form" do |form| %>
+        <%= hidden_field_tag :operation, "confirm", id: nil %><%= hidden_field_tag :feature, @key, id: nil %><%= hidden_field_tag :enabled, @enabled ? "1" : "0", id: nil %><%= hidden_field_tag :reason, @reason, id: nil %><%= hidden_field_tag :digest, @feature_digest, id: nil %>
+        <% if @key == "google_login" && !@enabled %><p>Les membres pourront utiliser leur mot de passe SEOS ou « Mot de passe oublié ». Confirmez votre propre mot de passe pour conserver votre accès.</p><%= input_field form, :password, "Votre mot de passe SEOS", type: :password_field, required: true, autocomplete: "current-password" %><% end %>
+        <div class="feature-confirmation-actions"><%= link_to "Annuler", admin_features_path(tab: @definition[:group]), class: "btn btn-outline" %><%= form.button "Confirmer ce changement", class: "btn btn-primary" %></div>
+      <% end %>
+    </section>
+  <% end %>
+  <nav class="workspace-tabs admin-overview-tabs" aria-label="Rubriques des fonctionnalités" data-workspace-tabs-target="navigation">
+    <% [["community", "Communauté"], ["services", "Services"], ["history", "Historique"]].each do |key, label| %><button type="button" id="workspace-tab-<%= key %>" data-workspace-tabs-target="tab" data-key="<%= key %>" data-action="workspace-tabs#select keydown->workspace-tabs#keyboard"><%= label %></button><% end %>
+  </nav>
+  <% %w[community services].each do |group| %>
+    <section id="workspace-<%= group %>" data-workspace-tabs-target="panel" data-key="<%= group %>">
+      <div class="feature-settings-grid">
+        <% AppFeatures::DEFINITIONS.select { |_key, item| item[:group] == group }.each do |key, item| %>
+          <% flag = @feature_values[item[:flag]]; available = AppFeatures.enabled?(key, @feature_values) %>
+          <article class="card feature-settings-card" id="feature-<%= key %>">
+            <h2><%= item[:label] %></h2><p><%= item[:description] %></p>
+            <p class="badge"><%= available ? "Actif" : (flag&.enabled == false ? "Désactivé" : "Indisponible : dépendance désactivée") %></p>
+            <% unless AppFeatures.configured?(key) %><p>La connexion Google nécessite encore les identifiants Google du serveur.</p><% end %>
+            <% if item[:dependencies].any? %><p>Dépend de : <%= item[:dependencies].map { |parent| AppFeatures.definition(parent)[:label] }.join(", ") %>.</p><% end %>
+            <%= form_with url: admin_features_path do |form| %>
+              <%= hidden_field_tag :operation, "preview", id: nil %><%= hidden_field_tag :feature, key, id: nil %><%= hidden_field_tag :digest, @feature_digest, id: nil %>
+              <%= select_field form, :enabled, "État de #{item[:label]}", [["Actif", "1"], ["Désactivé", "0"]], selected: flag&.enabled == false ? "0" : "1", id: "feature-#{key}-state" %>
+              <%= input_field form, :reason, "Motif du changement", required: true, maxlength: 500, placeholder: "Ex. : lancement de cette fonctionnalité plus tard", id: "feature-#{key}-reason" %>
+              <%= form.button "Vérifier les conséquences", class: "btn btn-outline" %>
+            <% end %>
+          </article>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+  <section id="workspace-history" data-workspace-tabs-target="panel" data-key="history">
+    <h2>Historique des changements</h2>
+    <% if @feature_changes.empty? %><p>Aucune fonctionnalité n’a encore été modifiée.</p><% end %>
+    <% @feature_changes.each do |change| %><article class="card"><h3><%= AppFeatures::DEFINITIONS.dig(change.metadata["feature"], :label) || "Fonctionnalité" %> · <%= change.metadata["to"] == "enabled" ? "Activée" : "Désactivée" %></h3><p><%= l change.created_at, format: :short %> · Super administrateur #<%= change.actor_id %></p><p><%= change.reason %></p></article><% end %>
+  </section>
+</div>

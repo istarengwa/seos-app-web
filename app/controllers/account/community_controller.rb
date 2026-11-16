@@ -1,10 +1,11 @@
 module Account
   class CommunityController < BaseController
     def show
-      @achievements = Achievement.where(active: true).order(:position, :id)
+      @achievements = Achievement.where(active: true).order(:position, :id).select { |quest| AppFeatures.quest_available?(quest) }
       @quest_progress = @achievements.to_h { |quest| [ quest.id, Achievements.progress(current_user, quest) ] }
       @quest_records = UserAchievement.where(user: current_user, achievement: @achievements).where(period_key: [ "lifetime", Time.current.strftime("%Y-%m") ]).index_by(&:achievement_id)
       @records = UserAchievement.where(user: current_user).includes(:achievement).order(id: :desc).limit(50)
+      @records = @records.select { |record| AppFeatures.quest_available?(record.achievement) }
       @listings = Listing.public_candidates.includes(:category, :organization, user: :profile).select { |listing| ListingPolicy.new(current_user, listing).update? && listing.publicly_visible? }
       @tops = TopListingRequest.where(user: current_user).includes(:listing).order(id: :desc).limit(20)
       @rule = PointRuleVersion.current("engagement")

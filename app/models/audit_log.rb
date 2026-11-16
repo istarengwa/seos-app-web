@@ -10,7 +10,9 @@ class AuditLog < ApplicationRecord
   private
 
   def safe_metadata
-    unless metadata.is_a?(Hash) && (metadata.keys - %w[from to permission grant_id]).empty? && metadata.values.all? { |value| value.is_a?(String) || value.is_a?(Integer) }
+    allowed = %w[from to permission grant_id]
+    allowed << "feature" if action == "feature.change"
+    unless metadata.is_a?(Hash) && (metadata.keys - allowed).empty? && metadata.values.all? { |value| value.is_a?(String) || value.is_a?(Integer) }
       errors.add(:metadata, "contient des champs non autorisés")
     end
   end

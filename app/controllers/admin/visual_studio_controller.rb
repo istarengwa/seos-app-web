@@ -34,6 +34,7 @@ module Admin
         publishedLegalDocumentHtml: published_legal_documents.transform_values { |fields| helpers.legal_rich_text(fields["body"]).to_s },
         page: @slug,
         legalDocument: params[:document].presence_in(ContentVersion::LEGAL_SLUGS),
+        featureBindings: AppFeatures::DEFINITIONS.transform_values { |item| item[:label] },
         digest: @source.digest,
         pages: @source.available_pages.to_h { |slug| [ slug, @source.site.dig("pages", slug) || SiteDesign.default_page(slug) ] },
         templates: builder_templates,
@@ -129,6 +130,7 @@ module Admin
     end
 
     def builder_canvas_for(page, slug)
+      @feature_editor = true
       @studio_version = @source
       @visual_preview = true
       if page["canvas"].present?
@@ -182,7 +184,9 @@ module Admin
         markup = protect_builder_dynamic_markup(markup)
         tone = SiteSectionSurface.tone(block)
         color = SiteSectionSurface::COLORS.fetch(tone)
-        markup = %(<div class="site-section" data-surface-tone="#{tone}" style="--section-bg:#{color};--previous-bg:var(--cream);--next-bg:var(--cream)">#{markup}</div>)
+        feature = AppFeatures::TEMPLATES[key]
+        binding = feature ? %( data-app-feature="#{feature}") : ""
+        markup = %(<div class="site-section"#{binding} data-surface-tone="#{tone}" style="--section-bg:#{color};--previous-bg:var(--cream);--next-bg:var(--cream)">#{markup}</div>)
         [ key, { name: helpers.site_section_name(key), description: helpers.site_section_description(key), html: markup } ]
       end
     end

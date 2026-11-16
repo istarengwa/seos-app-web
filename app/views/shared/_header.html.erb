@@ -1,5 +1,5 @@
 <% chrome = site_chrome("header") %>
-<% navigation_links = chrome["links"].reject { |link| link["url"] == volunteer_missions_path && !FeatureFlag.voyage_enabled? } %>
+<% navigation_links = chrome["links"].select { |link| app_feature_link_visible?(link["url"]) } %>
 <header class="topbar">
   <nav class="container nav" aria-label="Navigation principale">
     <%= link_to root_path, class: "brand", aria: { label: "SEOS — Accueil" } do %><%= image_tag site_image_path(chrome["logo"]), alt: chrome["alt"], width: 108, height: 38 %><% end %>

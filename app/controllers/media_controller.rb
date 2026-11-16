@@ -2,6 +2,10 @@ class MediaController < ApplicationController
   def show
     attachment = ActiveStorage::Attachment.find(params[:id])
     record = attachment.record
+    feature = { "Organization" => "associations", "VolunteerMission" => "voyage", "UserAchievement" => "quests", "Testimonial" => "testimonials" }[record.class.name]
+    available = !feature || AppFeatures.enabled?(feature)
+    available &&= AppFeatures.quest_available?(record.achievement) if record.is_a?(UserAchievement)
+    raise ActiveRecord::RecordNotFound unless available || current_user&.super_admin?
     allowed = case record
     when StudioAsset then record.publicly_visible? || current_user&.permission?("content.manage") || current_user&.permission?("studio.preview")
     when Listing then record.publicly_visible? || ListingPolicy.new(current_user, record).update?

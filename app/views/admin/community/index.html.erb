@@ -1,9 +1,10 @@
-<% content_for :title, "Quêtes & chaînes" %>
+<% content_for :title, admin_community_label %>
 <div class="community-admin">
-  <%= render "admin/shared/heading", title: "Quêtes & chaînes", description: "Configurez les parcours, examinez les preuves et accompagnez les chaînes depuis des espaces distincts." %>
+  <%= render "admin/shared/heading", title: admin_community_label, description: "Retrouvez les parcours disponibles et les demandes à examiner depuis des espaces distincts." %>
   <% tabs = [["Quêtes", "quests", @quest_total], ["Preuves", "proofs", @records.size], ["Mises en avant", "highlights", @tops.size], ["Témoignages", "testimonials", @testimonials.size], ["Chaînes", "chains", @chains.size]] %>
   <% tabs << ["Réglages", "settings", nil] if current_user.super_admin? %>
-  <nav class="admin-page-tabs community-admin-tabs" aria-label="Rubriques quêtes et chaînes">
+  <% tabs.select! { |_label, key, _count| @available_tabs.include?(key) } %>
+  <nav class="admin-page-tabs community-admin-tabs" aria-label="Rubriques d’engagement">
     <% tabs.each do |label, key, count| %>
       <%= link_to admin_community_index_path(tab: key), aria: ({ current: "page" } if @tab == key) do %><%= label %><% if count %><span><%= count %></span><% end %><% end %>
     <% end %>

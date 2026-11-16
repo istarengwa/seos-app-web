@@ -79,7 +79,7 @@ module SiteHelper
       chains = HelpChain.where(featured_on_home: true, status: "active").includes(chain_services: [ :chain_rewards, { provider: :profile, beneficiary: :profile } ]).order(updated_at: :desc).limit(3)
       chain_slots.each { |slot| slot.inner_html = chains.map { |chain| render("shared/chain_timeline", chain: chain) }.join }
     end
-    doc.to_html.html_safe
+    app_feature_markup(doc.to_html, blocks: blocks)
   end
   def site_token_label(key)
     { "radius" => "Arrondi général", "font-body" => "Police des textes", "font-heading" => "Police des titres", "motion" => "Animations du site", "button-radius" => "Arrondi des boutons", "card-radius" => "Arrondi des cartes", "section-space" => "Espacement des sections", "wave-height" => "Hauteur des vagues", "wave-speed" => "Durée d’un cycle de vague", "wave-amplitude" => "Amplitude des vagues", "wave-angle" => "Angle des vagues", "wave-roundness" => "Arrondi des vagues", "wave-shape" => "Forme des vagues", "shadow" => "Ombre des cartes" }.fetch(key)
@@ -154,6 +154,8 @@ module SiteHelper
       doc.at_css(".legal-tabs-slot").inner_html = render("contents/legal_tabs", values: values, block_id: block["id"])
     end
     # All markup comes from the checked-in reference. User values enter through text/attribute setters.
-    doc.to_html.html_safe
+    root = doc.at_css("section,article,div")
+    root["data-app-feature"] = AppFeatures::TEMPLATES[block["template"]] if root && block && AppFeatures::TEMPLATES.key?(block["template"])
+    app_feature_markup(doc.to_html)
   end
 end

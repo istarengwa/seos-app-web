@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_091000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_120000) do
   create_table "achievements", force: :cascade do |t|
     t.string "accent", default: "ocean", null: false
     t.boolean "active", default: true, null: false
@@ -274,12 +274,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_091000) do
 
   create_table "feature_flags", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "disabled_at"
     t.boolean "enabled", default: true, null: false
     t.string "key", null: false
     t.integer "lock_version", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["key"], name: "index_feature_flags_on_key", unique: true
-    t.check_constraint "key IN ('public_map_enabled','voyage_enabled')", name: "feature_flags_key_values"
+    t.check_constraint "key IN ('public_map_enabled','voyage_enabled','associations_enabled','quests_enabled','chains_enabled','referrals_enabled','testimonials_enabled','highlights_enabled','journal_enabled','google_login_enabled')", name: "feature_flags_key_values"
   end
 
   create_table "google_identities", force: :cascade do |t|

@@ -1,9 +1,9 @@
 module Account
   class NotificationsController < BaseController
     def index
-      @available_categories = current_user.notifications.distinct.pluck(:category)
+      @available_categories = current_user.notifications.feature_visible.distinct.pluck(:category)
       @category = params[:category] if Notification::CATEGORIES.key?(params[:category])
-      scope = current_user.notifications
+      scope = current_user.notifications.feature_visible
       scope = scope.where(category: @category) if @category
       @page = [ params[:page].to_i, 1 ].max
       @total = scope.count
@@ -12,7 +12,7 @@ module Account
     end
 
     def counts
-      render json: { categories: current_user.notifications.unread.group(:category).count,
+      render json: { categories: current_user.notifications.feature_visible.unread.group(:category).count,
         balance: PointAccount.find_by(user: current_user)&.balance || 0 }
     end
 
@@ -32,7 +32,7 @@ module Account
     end
 
     def open
-      notice = current_user.notifications.find(params[:id])
+      notice = current_user.notifications.feature_visible.find(params[:id])
       notice.update!(read_at: Time.current) unless notice.read_at
       redirect_to helpers.notification_destination(notice), status: :see_other
     end
