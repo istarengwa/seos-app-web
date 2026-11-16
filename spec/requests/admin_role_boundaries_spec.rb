@@ -22,11 +22,14 @@ RSpec.describe "Accès inclus dans le rôle admin", type: :request do
     login admin
     get admin_root_path
     expect(response.body).not_to include("Gestion du site", "Propositions éditoriales", "Kit UI/UX")
-    paths = [ admin_site_index_path, admin_studio_index_path ] + %w[categories contenus].map { |kind| admin_workbench_index_path(kind: kind) }
+    source = Studio.change!(actor: create(:user, :super_admin), name: "Accès", settings: {})
+    paths = [ admin_site_index_path, builder_admin_site_path(source), preview_admin_studio_path(source), review_admin_site_path(source) ] + %w[categories contenus].map { |kind| admin_workbench_index_path(kind: kind) }
     paths.each do |path|
       get path
       expect(response).to have_http_status(:forbidden), path
-      post path, params: { reason: "Tentative" }
+    end
+    [ builder_save_admin_site_path(source), builder_preview_admin_site_path(source), publish_admin_site_path(source) ].each do |path|
+      expect { post path, params: { document: {}.to_json, digest: source.digest } }.not_to change(StudioVersion, :count)
       expect(response).to have_http_status(:forbidden), path
     end
     category = create(:category)
@@ -40,10 +43,14 @@ RSpec.describe "Accès inclus dans le rôle admin", type: :request do
   end
 
   it "conserve la gestion du site pour le super admin" do
-    login create(:user, :super_admin)
+    super_admin = create(:user, :super_admin)
+    login super_admin
     get admin_root_path
-    expect(response.body).to include("Gestion du site")
-    [ admin_site_index_path, admin_studio_index_path, admin_workbench_index_path(kind: "categories") ].each do |path|
+    expect(response.body).to include("Éditeur visuel")
+    source = Studio.change!(actor: super_admin, name: "Site", settings: {})
+    get admin_site_index_path
+    expect(response).to redirect_to(builder_admin_site_path(source, page: "home"))
+    [ builder_admin_site_path(source), admin_workbench_index_path(kind: "categories") ].each do |path|
       get path
       expect(response).to have_http_status(:ok), path
     end

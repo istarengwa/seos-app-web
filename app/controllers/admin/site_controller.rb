@@ -5,12 +5,11 @@ module Admin
 
     def index
       version = workspace_version || Studio.change!(actor: current_user, settings: {}, name: "Éditeur visuel", source: StudioVersion.current)
-      redirect_to visual_admin_site_path(version, page: params[:page].presence || "home"), status: :see_other
+      redirect_to builder_admin_site_path(version, page: params[:page].presence || "home"), status: :see_other
     end
 
     def review
       @area = params[:area]
-      @editor = params[:editor].presence_in(%w[visual builder]) || "visual"
       @slug = params[:page].presence || "home"
       raise ActiveRecord::RecordNotFound unless @version.available_pages.include?(@slug)
       @device = params[:device].presence_in(%w[phone tablet desktop]) || "desktop"

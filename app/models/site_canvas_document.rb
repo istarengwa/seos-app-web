@@ -5,15 +5,16 @@ class SiteCanvasDocument
     a abbr address article aside b blockquote br button caption cite code col colgroup
     dd details div dl dt em fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6
     header hr i img input label legend li main nav ol option p picture section select
-    small source span strong summary svg table tbody td textarea tfoot th thead tr u ul path
+    small source span strong summary svg table tbody td textarea tfoot th thead tr u ul path video
   ].freeze
   ALLOWED_ATTRIBUTES = %w[
     abbr accept action alt autocomplete checked class colspan controls decoding disabled
     for height href id loading max maxlength method min minlength multiple name open
-    pattern placeholder poster preserveaspectratio rel required role rows rowspan selected src step style target
+    pattern placeholder playsinline poster preload preserveaspectratio rel required role rows rowspan selected src step style target
     title type value viewbox width d fill stroke stroke-width
   ].freeze
   URL_ATTRIBUTES = %w[action href poster src].freeze
+  DYNAMIC_SELECTORS = %w[.category-grid .ad-grid .testimonial-grid .travel-missions-slot .legal-tabs-slot .chain-home-grid].freeze
   SAFE_URL = %r{\A(?:/|#|https://|mailto:|tel:|data:image/(?:png|jpeg|gif|webp);base64,)}i
 
   class << self
@@ -41,6 +42,7 @@ class SiteCanvasDocument
           node["rel"] = "noopener noreferrer"
         end
       end
+      fragment.css(DYNAMIC_SELECTORS.join(",")).each { |node| node.children.remove }
       fragment.to_html
     end
 

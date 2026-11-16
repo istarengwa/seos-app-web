@@ -10,7 +10,6 @@
     <div class="studio-v2-history" aria-label="Historique"><button type="button" data-studio-command="undo" aria-label="Annuler">↶</button><button type="button" data-studio-command="redo" aria-label="Rétablir">↷</button></div>
     <p class="studio-v2-status" data-studio-status role="status" aria-live="polite">Tous les éléments de la page sont modifiables.</p>
     <div class="studio-v2-publish-actions">
-      <%= link_to "Ancien éditeur", visual_admin_site_path(@source, page: @slug), class: "studio-v2-secondary-action" %>
       <button type="button" data-studio-save class="studio-v2-secondary-action">Enregistrer</button>
       <button type="button" data-studio-review class="studio-v2-primary-action">Vérifier et publier</button>
     </div>
@@ -33,8 +32,9 @@
         <div class="studio-v2-selection-head"><button type="button" data-studio-back aria-label="Retour">←</button><div><span>Élément sélectionné</span><h2 data-studio-selection-name>Aucune sélection</h2></div></div>
         <div class="studio-v2-selection-tabs"><button type="button" class="is-active" data-settings-tab="style">Style</button><button type="button" data-settings-tab="content">Contenu</button><button type="button" data-settings-tab="advanced">Avancé</button></div>
         <div data-settings-panel="style"><div class="studio-v2-wave-controls" data-wave-controls hidden><strong>Forme de la vague</strong><label>Courbure <output data-wave-output="roundness">55%</output><input type="range" min="0" max="100" value="55" data-wave-control="roundness"></label><label>Profondeur <output data-wave-output="depth">65%</output><input type="range" min="10" max="110" value="65" data-wave-control="depth"></label><label>Inclinaison <output data-wave-output="angle">0°</output><input type="range" min="-15" max="15" value="0" data-wave-control="angle"></label></div><div data-studio-styles></div></div>
+        <div data-dynamic-notice class="studio-v2-dynamic-notice" hidden><strong>Contenu dynamique protégé</strong><p>Ces informations viennent directement de l’application. Vous pouvez déplacer et habiller le widget, mais pas inventer ou modifier ses données.</p></div>
         <div data-settings-panel="content" hidden><div class="studio-v2-inline-help"><strong>Texte libre</strong><p>Double-cliquez un texte dans la page. La barre flottante permet gras, italique, souligné et liens.</p></div><div data-studio-traits></div></div>
-        <div data-settings-panel="advanced" hidden><div class="studio-v2-inline-help"><strong>Placement</strong><p>Déplacez l’élément dans n’importe quel conteneur depuis la page ou l’arbre.</p></div><button type="button" class="studio-v2-danger-action" data-studio-delete>Supprimer cet élément</button></div>
+        <div data-settings-panel="advanced" hidden><div class="studio-v2-inline-help"><strong>Placement</strong><p>Déplacez l’élément dans n’importe quel conteneur depuis la page ou l’arbre.</p></div><label class="studio-v2-animation-field">Animation d’apparition<select data-studio-animation><option value="">Aucune</option><option value="studio-anim-fade">Fondu doux</option><option value="studio-anim-up">Glissement vertical</option><option value="studio-anim-side">Glissement latéral</option><option value="studio-anim-zoom">Zoom doux</option><option value="studio-anim-float">Flottement continu</option></select></label><button type="button" class="studio-v2-danger-action" data-studio-delete>Supprimer cet élément</button></div>
       </section>
     </aside>
     <section class="studio-v2-canvas-shell" aria-label="Éditeur visuel">

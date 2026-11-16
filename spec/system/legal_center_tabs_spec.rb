@@ -8,13 +8,15 @@ RSpec.describe "Édition du centre légal", type: :system do
     fill_in "Mot de passe", with: "UnMotDePasseSolide!42"
     click_button "Se connecter"
     expect(page).to have_current_path(account_root_path)
-    visit visual_admin_site_path(version, page: "legal")
-    within_frame(find("iframe")) { find('.legal-center h1 [data-field="title"]').click }
-    within('.visual-inspector') { fill_in "Titre du centre", with: "Nos règles et vos choix" }
-    within_frame(find("iframe")) { expect(page).to have_css('h1', text: "Nos règles et vos choix") }
+    visit builder_admin_site_path(version, page: "legal")
+    within_frame(find(".gjs-frame")) do
+      find('.legal-center h1').double_click
+      find('[contenteditable="true"]').send_keys([ :control, 'a' ], "Nos règles et vos choix")
+      find("footer").click
+    end
     click_button "Enregistrer", exact: true
-    expect(page).to have_content("Copie enregistrée")
-    expect(StudioVersion.last.site.dig("pages", "legal", "blocks", 0, "values", "title")).to eq("Nos règles et vos choix")
+    expect(page).to have_content("Modifications enregistrées")
+    expect(StudioVersion.last.site.dig("pages", "legal", "canvas", "html")).to include("Nos règles et vos choix")
     visit legal_center_path
     expect(page).not_to have_css('h1', text: "Nos règles et vos choix")
   end

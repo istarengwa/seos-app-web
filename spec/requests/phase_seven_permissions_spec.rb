@@ -5,7 +5,7 @@ RSpec.describe "Délégations et garde-fous de la phase 7", type: :request do
   let(:user) { create(:user) }
   it "refuse les espaces sans droit et dissocie conservation et demandes" do
     login admin
-    [ admin_privacy_index_path, admin_studio_index_path, admin_operations_path ].each do |path|
+    [ admin_privacy_index_path, admin_site_index_path, admin_operations_path ].each do |path|
       get path
       expect(response).to have_http_status(:forbidden)
     end
@@ -89,24 +89,23 @@ RSpec.describe "Délégations et garde-fous de la phase 7", type: :request do
     expect(response).to have_http_status(:forbidden)
     get admin_operations_path(resource: "point_entry")
     expect(response).to have_http_status(:forbidden)
-    post admin_studio_index_path, params: { operation: "upload" }
+    source = Studio.change!(actor: super_admin, name: "Copie privée", settings: {})
+    post builder_save_admin_site_path(source), params: { document: {}.to_json, digest: source.digest }
     expect(response).to have_http_status(:forbidden)
     grant(admin, "content.manage")
-    post admin_studio_index_path, params: { operation: "draft", name: "Page", pages: { home: { title: "Nouveau titre", animated: "1" } } }
+    post builder_save_admin_site_path(source), params: { document: {}.to_json, digest: source.digest }
     expect(response).to have_http_status(:forbidden)
     delete destroy_user_session_path
     login super_admin
-    post admin_studio_index_path, params: { operation: "draft", name: "Page", pages: { home: { title: "Nouveau titre", animated: "1" } } }
-    expect(response).to have_http_status(:see_other)
-    version = StudioVersion.last
-    expect(version.page("home")["animated"]).to be(true)
+    version = save_studio_version(source, { "site" => { "pages" => { "home" => SiteDesign.home_page } }, "tokens" => { "motion" => "subtle" } })
+    expect(version.tokens["motion"]).to eq("subtle")
     delete destroy_user_session_path
     login admin
-    post admin_studio_index_path, params: { operation: "publish", record_id: version.id, reason: "Tentative" }
+    post publish_admin_site_path(version), params: { digest: version.digest, live_id: "" }
     expect(response).to have_http_status(:forbidden)
     delete destroy_user_session_path
     login super_admin
-    post admin_studio_index_path, params: { operation: "draft", name: "Code", settings: "not JSON" }
+    post builder_save_admin_site_path(version), params: { document: "not JSON", digest: version.digest }
     expect(response).to have_http_status(:unprocessable_content)
     get preview_admin_studio_path(version, width: 999)
     expect(response.body).to include("iframe", "1440")

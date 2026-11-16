@@ -5,13 +5,15 @@ RSpec.describe "Voyage solidaire dans le Studio", type: :request do
     admin = create(:user, :super_admin)
     login admin
     source = Studio.change!(actor: admin, settings: {}, name: "Voyage")
-    get visual_admin_site_path(source, page: "voyage-solidaire")
+    get builder_admin_site_path(source, page: "voyage-solidaire")
     expect(response).to have_http_status(:ok)
     get preview_admin_studio_path(source, page: "voyage-solidaire", canvas: "1")
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Filtrer les missions")
-    patch admin_site_path(source), params: { operation: "page", page: "voyage-solidaire", block_id: "travel-list", block_action: "save", values: { "text-0" => "Votre pays", "text-2" => "De nouvelles missions arrivent bientôt." } }
-    expect(response).to have_http_status(:see_other)
+    page = SiteDesign.default_page("voyage-solidaire")
+    page["blocks"].find { |block| block["id"] == "travel-list" }["values"].merge!("text-0" => "Votre pays", "text-2" => "De nouvelles missions arrivent bientôt.")
+    post builder_save_admin_site_path(source), params: { document: { "site" => { "pages" => { "voyage-solidaire" => page } } }.to_json, digest: source.digest, page: "voyage-solidaire" }
+    expect(response).to have_http_status(:ok)
     version = StudioVersion.last
     get volunteer_missions_path
     expect(response).to have_http_status(:ok)
@@ -26,7 +28,7 @@ RSpec.describe "Voyage solidaire dans le Studio", type: :request do
     admin = create(:user, :super_admin)
     version = Studio.change!(actor: admin, settings: {}, name: "Voyage")
     login create(:user)
-    get visual_admin_site_path(version, page: "voyage-solidaire")
+    get builder_admin_site_path(version, page: "voyage-solidaire")
     expect(response).to have_http_status(:forbidden)
   end
 end

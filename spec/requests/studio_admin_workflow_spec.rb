@@ -1,5 +1,5 @@
 require "rails_helper"
-RSpec.describe "Studio admin guidé", type: :request do
+RSpec.describe "Parcours de publication du Studio V2", type: :request do
   let(:admin) { create(:user, :super_admin) }
   it "présente une seule entrée de gestion, adaptée au rôle" do
     login admin
@@ -10,7 +10,7 @@ RSpec.describe "Studio admin guidé", type: :request do
     get super_admin_root_path
     expect(response).to redirect_to(admin_root_path)
     follow_redirect!
-    expect(response.body).to include("Gérer les pages", "Ouvrir le kit UI/UX")
+    expect(response.body).to include("Éditeur visuel", admin_site_index_path)
     delete destroy_user_session_path
     login create(:user, :admin)
     get admin_root_path
@@ -18,35 +18,25 @@ RSpec.describe "Studio admin guidé", type: :request do
     expect(response.body).not_to include("Personnalisation", "Gérer les pages")
   end
 
-  it "crée une page à partir de son nom et publie seulement après ajout de contenu" do
+  it "refuse une page vide puis publie sa composition après relecture" do
     login admin
-    get new_page_admin_site_index_path
-    expect(response.body).to include("Nom de la page")
-    post admin_site_index_path, params: { operation: "create_page", title: "Notre équipe" }
-    version = StudioVersion.last
-    block = version.site.dig("pages", "notre-equipe", "blocks", 0)
-    expect(response).to redirect_to(edit_admin_site_path(version, page: "notre-equipe", section: block["id"]))
-    follow_redirect!
-    expect(response.body).to include("Enregistrer et voir le résultat")
+    document = { "site" => { "pages" => { "notre-equipe" => { "title" => "Notre équipe", "blocks" => [] } } } }
+    source = Studio.change!(actor: admin, settings: {}, name: "Départ")
+    version = save_studio_version(source, document, page: "notre-equipe")
     get review_admin_site_path(version, page: "notre-equipe")
     expect(response.body).to include("Ajoutez du contenu")
     post publish_admin_site_path(version), params: { digest: version.digest, live_id: "" }
     expect(response).to have_http_status(:unprocessable_content)
     expect(version.reload.status).to eq("draft")
-    patch admin_site_path(version), params: { operation: "page", page: "notre-equipe", block_id: block["id"], block_action: "save", after_save: "review", values: { title: "Notre équipe", body: "Nous accompagnons les voisins.", label: "", url: "" } }
-    saved = StudioVersion.last
-    expect(response).to redirect_to(review_admin_site_path(saved, page: "notre-equipe"))
-    follow_redirect!
-    expect(response.body).to include("Téléphone", "Tablette", "Ordinateur", "Mettre en ligne")
-    expect(response.body).not_to include("Motif de validation", "375 px")
+    document["site"]["pages"]["notre-equipe"]["blocks"] << { "id" => "intro", "template" => "text", "values" => { "title" => "Notre équipe", "body" => "Nous accompagnons les voisins." } }
+    saved = save_studio_version(version, document, page: "notre-equipe")
+    get review_admin_site_path(saved, page: "notre-equipe")
+    expect(response.body).to include("Téléphone", "Tablette", "Ordinateur", "Mettre en ligne", builder_admin_site_path(saved, page: "notre-equipe"))
     post publish_admin_site_path(saved), params: { digest: saved.digest, live_id: "" }
     expect(response).to have_http_status(:see_other)
     expect(saved.reload.status).to eq("published")
     get site_page_path("notre-equipe")
     expect(response.body).to include("Nous accompagnons les voisins.")
-    expect(saved.settings.dig("site", "pages", "notre-equipe", "blocks", 0, "values")).not_to have_key("url")
-    post admin_site_index_path, params: { operation: "create_page", title: "Notre équipe" }
-    expect(StudioVersion.last.site["pages"]).to have_key("notre-equipe-2")
   end
 
   it "protège l’aperçu et refuse les publications obsolètes ou altérées" do
@@ -66,7 +56,7 @@ RSpec.describe "Studio admin guidé", type: :request do
     expect(response).to have_http_status(:unprocessable_content)
     expect(first.reload.status).to eq("draft")
     get admin_site_index_path
-    expect(response.body).to include("Consulter cette sauvegarde")
+    expect(response).to redirect_to(builder_admin_site_path(StudioVersion.current, page: "home"))
   end
 
   it "conserve la publication et les audits atomiques" do

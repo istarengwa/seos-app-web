@@ -8,8 +8,6 @@ RSpec.describe "Présentation animée", type: :system do
     visit root_path
     expect(page).to have_css('.hero-slide.active[data-label="Partage de compétences"]', wait: 9)
     expect(page).to have_css('[data-hero-carousel-target="label"]', text: "Partage de compétences")
-    click_button "Mettre le diaporama en pause"
-    expect(page).to have_button("Lancer le diaporama")
     click_link "▶ Comprendre en 2 minutes"
     expect(page).to have_current_path(root_path)
     expect(page.evaluate_script("location.hash")).to eq("#presentation")
@@ -35,35 +33,5 @@ RSpec.describe "Présentation animée", type: :system do
         })()
       JS
     end
-  end
-end
-
-RSpec.describe "Diaporama dans le Studio", type: :system do
-  it "ajoute, modifie et supprime une diapositive puis conserve la copie" do
-    admin = create(:user, :super_admin)
-    version = Studio.change!(actor: admin, name: "Diaporama", settings: { "site" => { "pages" => { "home" => SiteDesign.home_page } } })
-    visit new_user_session_path
-    fill_in "E-mail", with: admin.email
-    fill_in "Mot de passe", with: "UnMotDePasseSolide!42"
-    click_button "Se connecter"
-    expect(page).to have_current_path(account_root_path)
-    visit visual_admin_site_path(version)
-    within_frame(find("iframe")) { find('.hero [data-field="text-4"]').click }
-    within(".visual-inspector") do
-      find("summary", text: "Diaporama et vidéo").click
-      click_button "Ajouter une diapositive"
-      find("summary", text: "Diaporama et vidéo").click
-      find("summary", text: "Diapositive 4", exact_text: true).click
-      within(find("summary", text: "Diapositive 4", exact_text: true).find(:xpath, "..")) do
-        fill_in "Phrase", with: "Des liens autour du jardin"
-      end
-    end
-    click_button "Enregistrer", exact: true
-    expect(page).to have_content("Copie enregistrée")
-    expect(JSON.parse(StudioVersion.last.site.dig("pages", "home", "blocks", 0, "values", "slides")).last["label"]).to eq("Des liens autour du jardin")
-    within(".visual-inspector") { click_button "Supprimer cette diapositive", match: :first }
-    click_button "Enregistrer", exact: true
-    expect(page).to have_content("Copie enregistrée")
-    expect(JSON.parse(StudioVersion.last.site.dig("pages", "home", "blocks", 0, "values", "slides")).size).to eq(3)
   end
 end

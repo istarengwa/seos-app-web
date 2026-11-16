@@ -5,9 +5,7 @@ RSpec.describe "Suppression des pages du Studio", type: :request do
     admin = create(:user, :super_admin)
     login admin
     source = Studio.change!(actor: admin, settings: {}, name: "Site")
-    patch admin_site_path(source), params: { operation: "delete_page", page: "voyage-solidaire" }
-    expect(response).to have_http_status(:see_other)
-    version = StudioVersion.last
+    version = save_studio_version(source, { "site" => { "deleted_pages" => [ "voyage-solidaire" ] } })
     expect(version.available_pages).not_to include("voyage-solidaire")
     get volunteer_missions_path
     expect(response).to have_http_status(:ok)

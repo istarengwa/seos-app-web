@@ -13,7 +13,7 @@ RSpec.describe "Parcours de confidentialité et pilotage", type: :request do
     get privacy_preferences_path, params: { popup: "1" }
     expect(response.headers["Cache-Control"]).to include("no-store")
     post privacy_preferences_path, params: { choice: "invalid" }
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
   end
   it "réserve le téléchargement au propriétaire et à une session récente" do
     login user
@@ -65,20 +65,20 @@ RSpec.describe "Parcours de confidentialité et pilotage", type: :request do
   end
   it "offre une prévisualisation privée et garde la publication sous contrôle" do
     login admin
-    get admin_studio_index_path
-    expect(response).to have_http_status(:ok)
-    post admin_studio_index_path, params: { operation: "draft", name: "Essai", settings: { tokens: {}, pages: { home: { title: "Titre de démonstration" } } }.to_json }
-    version = StudioVersion.last
-    expect(version).to be_present
+    get admin_site_index_path
+    expect(response).to have_http_status(:see_other)
+    source = StudioVersion.last
+    home = { "title" => "Accueil", "blocks" => [ { "id" => "intro", "template" => "text", "values" => { "title" => "Titre de démonstration", "body" => "Brouillon privé avant publication." } } ] }
+    version = save_studio_version(source, { "site" => { "pages" => { "home" => home } } })
     get preview_admin_studio_path(version, width: 375, canvas: "1")
     expect(response.body).to include("Titre de démonstration")
     expect(response.headers["X-Robots-Tag"]).to include("noindex")
     get root_path
     expect(response.body).not_to include("Titre de démonstration")
-    %w[validate publish].each do |operation|
-      post admin_studio_index_path, params: { operation: operation, record_id: version.id, reason: "Recette" }
-      expect(response).to have_http_status(:see_other)
-    end
+    get review_admin_site_path(version)
+    expect(response).to have_http_status(:ok)
+    post publish_admin_site_path(version), params: { digest: version.digest, live_id: "" }
+    expect(response).to have_http_status(:see_other)
     get root_path
     expect(response.body).to include("Titre de démonstration")
   end

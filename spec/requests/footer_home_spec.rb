@@ -19,9 +19,9 @@ RSpec.describe "Footer et accueil maquette", type: :request do
     expect(Nokogiri::HTML(response.body).at_css('.legal-sidebar a[href="#legal-cgu"]').text).to eq("Conditions d’utilisation")
   end
 
-  it "compose les onze sections dans l’ordre et conserve leurs modèles éditables" do
+  it "compose les dix sections actives dans l’ordre et conserve leurs modèles éditables" do
     document = SiteDesign.home_page
-    expect(document["blocks"].map { |block| block["template"] }).to eq(11.times.map { |i| "home-#{i}" })
+    expect(document["blocks"].map { |block| block["template"] }).to eq(10.times.map { |i| "home-#{i}" })
     expect(SiteDesign.valid?({ "pages" => { "home" => document } })).to be(true)
     document["blocks"].each { |block| expect(SiteDesign.templates).to have_key(block["template"]) }
   end

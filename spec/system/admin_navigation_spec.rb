@@ -30,7 +30,8 @@ RSpec.describe "Sidebar de l’administration", type: :system do
       find("summary", text: "Outils").click
       click_link "Éditeur visuel"
     end
-    expect(page).to have_css("h1", text: "Éditeur visuel")
+    expect(page).to have_css("[data-studio-builder]")
+    expect(page).to have_content("Studio V2")
     visit admin_users_path
     expect(page).to have_css('.desktop-workspace-navigation a[aria-current="page"]', text: "Membres")
   end

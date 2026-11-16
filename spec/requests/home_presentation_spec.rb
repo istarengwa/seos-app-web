@@ -19,7 +19,7 @@ RSpec.describe "Présentation et pages d’échange", type: :request do
     slides.first["label"] = "Un jardin partagé"
     blocks.first["values"]["slides"] = slides.to_json
     blocks[5]["values"]["video-url"] = "https://media.example.org/presentation.mp4"
-    post visual_save_admin_site_path(version), params: { document: document.to_json, digest: version.digest }
+    post builder_save_admin_site_path(version), params: { document: document.to_json, digest: version.digest }
     expect(response).to have_http_status(:ok)
     saved = StudioVersion.last
     %w[validate publish].each { |action| Studio.transition!(version: saved, actor: admin, action: action, reason: "Présentation") }

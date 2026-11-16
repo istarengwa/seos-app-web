@@ -12,6 +12,7 @@ RSpec.describe "Studio V2 visuel", type: :system do
     fill_in "E-mail", with: admin.email
     fill_in "Mot de passe", with: "UnMotDePasseSolide!42"
     click_button "Se connecter"
+    expect(page).to have_current_path(account_root_path)
 
     visit builder_admin_site_path(version)
     expect(page).to have_content("Studio V2")
@@ -31,6 +32,18 @@ RSpec.describe "Studio V2 visuel", type: :system do
     click_button "←"
     within(".studio-v2-library-switch") { click_button "Compositions" }
     expect(page).to have_css('.gjs-block[data-library-kind="section"]', minimum: 1, visible: :visible)
+    find(".gjs-title", text: "ACCUEIL").click
+    first(".gjs-block", text: "Annonces récentes").find(".visual-template-add").click
+    within_frame(find(".gjs-frame")) do
+      widget = find(".ad-grid", visible: :all)
+      page.execute_script("arguments[0].style.minHeight = '44px'", widget.native)
+      widget.click
+    end
+    expect(page).to have_css("[data-dynamic-notice]:not([hidden])", text: "Contenu dynamique protégé")
+    expect(page).to have_css('[data-settings-tab="content"][disabled]')
+    expect(page).to have_css("[data-studio-delete][disabled]", visible: :all)
+
+    click_button "←"
     within(".studio-v2-library-switch") { click_button "Éléments" }
     first(".gjs-block", text: "Titre").find(".visual-template-add").click
     within_frame(find(".gjs-frame")) do

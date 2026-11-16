@@ -92,7 +92,7 @@ RSpec.describe "Refonte des espaces", type: :request do
     login create(:user, :super_admin)
     get admin_site_index_path
     expect(response).to have_http_status(:see_other)
-    expect(response.location).to include("/admin/site/", "/visual")
+    expect(response.location).to include("/admin/site/", "/builder")
   end
 
   it "affiche le contrôle de visibilité sur les mots de passe" do
