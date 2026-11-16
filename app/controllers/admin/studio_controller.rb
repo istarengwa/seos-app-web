@@ -13,10 +13,11 @@ module Admin
       return render :preview, layout: "application" unless params[:canvas] == "1"
 
       @preview_width = nil
+      @visual_preview = true
       if (@page = @studio_version.site.dig("pages", @preview_page))
         @slug = @preview_page
         render "site/show", layout: "application"
-      elsif %w[communaute voyage-solidaire].include?(@preview_page)
+      elsif %w[legal communaute voyage-solidaire].include?(@preview_page)
         @slug = @preview_page
         @page = SiteDesign.default_page(@slug)
         render "site/show", layout: "application"

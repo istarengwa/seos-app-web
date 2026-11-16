@@ -4,14 +4,14 @@ class SiteCanvasDocument
   ALLOWED_TAGS = %w[
     a abbr address article aside b blockquote br button caption cite code col colgroup
     dd details div dl dt em fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6
-    header hr i img input label legend li main nav ol option p picture section select
+    header hr i img input label legend li main nav ol option p picture section select g rect circle ellipse polygon polyline line
     small source span strong summary svg table tbody td textarea tfoot th thead tr u ul path video
   ].freeze
   ALLOWED_ATTRIBUTES = %w[
     abbr accept action alt autocomplete checked class colspan controls decoding disabled
     for height href id loading max maxlength method min minlength multiple name open
     pattern placeholder playsinline poster preload preserveaspectratio rel required role rows rowspan selected src step style target
-    title type value viewbox width d fill stroke stroke-width
+    title type value viewbox width d fill stroke stroke-width transform x y x1 y1 x2 y2 cx cy r rx ry points
   ].freeze
   URL_ATTRIBUTES = %w[action href poster src].freeze
   DYNAMIC_SELECTORS = %w[.category-grid .ad-grid .testimonial-grid .travel-missions-slot .legal-tabs-slot .chain-home-grid].freeze

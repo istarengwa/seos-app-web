@@ -42,3 +42,6 @@ application.register("password-visibility", PasswordVisibilityController)
 
 import DashboardActivityController from "./dashboard_activity_controller"
 application.register("dashboard-activity", DashboardActivityController)
+
+import StudioReviewController from "./studio_review_controller"
+application.register("studio-review", StudioReviewController)

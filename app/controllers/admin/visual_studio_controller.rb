@@ -23,9 +23,16 @@ module Admin
       assets = StudioAsset.includes(image_attachment: :blob).order(id: :desc)
       page = @source.site.dig("pages", @slug) || SiteDesign.default_page(@slug)
       canvas = builder_canvas_for(page, @slug)
+      legal_documents = StudioLegalDocuments.for_editor(@source)
+      published_legal_documents = StudioLegalDocuments.for_editor
       @builder_data = {
         settings: editable_settings,
+        legalDocuments: legal_documents,
+        legalDocumentHtml: legal_documents.transform_values { |fields| helpers.legal_rich_text(fields["body"]).to_s },
+        publishedLegalDocuments: published_legal_documents,
+        publishedLegalDocumentHtml: published_legal_documents.transform_values { |fields| helpers.legal_rich_text(fields["body"]).to_s },
         page: @slug,
+        legalDocument: params[:document].presence_in(ContentVersion::LEGAL_SLUGS),
         digest: @source.digest,
         pages: @source.available_pages.to_h { |slug| [ slug, @source.site.dig("pages", slug) || SiteDesign.default_page(slug) ] },
         templates: builder_templates,
@@ -74,7 +81,7 @@ module Admin
     def builder_save
       draft = proposal
       raise Exchanges::Invalid, "Cette copie a changé. Rechargez le Studio V2 avant d’enregistrer." unless params[:digest] == @source.digest
-      version = Studio.change!(actor: current_user, source: @source, name: "Composition Studio V2", settings: draft.settings.slice("site", "tokens"))
+      version = Studio.change!(actor: current_user, source: @source, name: "Composition Studio V2", settings: draft.settings.slice("site", "tokens", "legal_documents"))
       render json: {
         digest: version.digest,
         url: builder_admin_site_path(version),
@@ -94,6 +101,7 @@ module Admin
 
     def editable_settings
       settings = @source.settings.deep_dup
+      settings.delete("legal_documents") if @source.status == "published"
       settings.dig("site", "pages")&.each_value do |page|
         page["blocks"]&.reject! { |block| SiteDesign::RETIRED_TEMPLATES.include?(block["template"]) }
       end
@@ -104,7 +112,7 @@ module Admin
       raw = params[:document].to_s
       raise Exchanges::Invalid, "Cette page est trop volumineuse." if raw.bytesize > 2.megabytes
       document = JSON.parse(raw)
-      raise Exchanges::Invalid, "Le contenu de la copie est invalide." unless document.is_a?(Hash) && (document.keys - %w[site tokens pages editorial_resets]).empty?
+      raise Exchanges::Invalid, "Le contenu de la copie est invalide." unless document.is_a?(Hash) && (document.keys - %w[site tokens pages editorial_resets legal_documents]).empty?
       document.dig("site", "pages")&.each_value do |page|
         next unless page.is_a?(Hash) && page["canvas"].is_a?(Hash)
         page["canvas"] = {
@@ -113,7 +121,7 @@ module Admin
           "css" => SiteCanvasDocument.sanitize_css(page.dig("canvas", "css"))
         }
       end
-      settings = @source.settings.merge(document.slice("site", "tokens"))
+      settings = editable_settings.merge(document.slice("site", "tokens", "legal_documents"))
       StudioVersion.new(author: current_user, name: "Aperçu privé", settings: settings).tap(&:validate!)
     rescue JSON::ParserError
       raise Exchanges::Invalid, "Le contenu de la copie est illisible."
@@ -132,9 +140,11 @@ module Admin
         fragment.css("style,.site-edit-link").remove
         content = (fragment.at_css(".maquette-surface") || fragment).to_html
       end
-      header = render_to_string(partial: "shared/header")
-      footer = render_to_string(partial: "shared/footer")
-      html = %(<div data-studio-chrome="header">#{header}</div>#{content}<div data-studio-chrome="footer">#{footer}</div>)
+      header = Nokogiri::HTML5.fragment(render_to_string(partial: "shared/header"))
+      footer = Nokogiri::HTML5.fragment(render_to_string(partial: "shared/footer"))
+      header.at_css("header")["data-studio-chrome"] = "header"
+      footer.at_css("footer")["data-studio-chrome"] = "footer"
+      html = %(#{header}<main id="main-content" data-studio-page>#{content}</main>#{footer})
       { "version" => 1, "html" => protect_builder_dynamic_markup(html), "css" => css }
     end
 
@@ -169,6 +179,9 @@ module Admin
             helpers.maquette_html(template.fetch("html", ""), block: block).to_s
           end
         markup = protect_builder_dynamic_markup(markup)
+        tone = SiteSectionSurface.tone(block)
+        color = SiteSectionSurface::COLORS.fetch(tone)
+        markup = %(<div class="site-section" data-surface-tone="#{tone}" style="--section-bg:#{color};--previous-bg:var(--cream);--next-bg:var(--cream)">#{markup}</div>)
         [ key, { name: helpers.site_section_name(key), description: helpers.site_section_description(key), html: markup } ]
       end
     end

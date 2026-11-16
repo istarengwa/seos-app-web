@@ -73,9 +73,13 @@ Les échanges peuvent se faire sous forme de don, de troc ou de Points Services.
 2. Choisir la page dans le sélecteur du constructeur.
 3. Ajouter une composition ou un élément, puis sélectionner les éléments pour modifier leur texte, leur apparence et leur disposition.
 4. Cliquer sur **Enregistrer** pour conserver un brouillon privé.
-5. Cliquer sur **Vérifier et publier**, relire l’aperçu et confirmer avec **Mettre en ligne**.
+5. Cliquer sur **Vérifier et publier**, relire l’aperçu pleine page, régler sa largeur avec le curseur ou les boutons d’appareil, puis confirmer avec **Enregistrer et publier**.
 
 Les modifications deviennent publiques après cette dernière confirmation. Les contenus dynamiques, comme les annonces ou les missions, sont alimentés par l’application. Les anciennes URL d’ouverture de l’éditeur redirigent vers la V2.
+
+Les réglages courants sont présentés en français dans **Style** ; les propriétés CSS détaillées restent dans **Avancé → Réglages techniques**. Les vagues existantes se sélectionnent dans la page ou dans **Structure** : direction, courbure, hauteur, couleur et inclinaison sont réglables. Les boutons miroir retournent aussi les autres éléments. Un changement de page enregistre les modifications en cours ; une erreur d’enregistrement maintient la page ouverte.
+
+Pour les CGU, la confidentialité, les cookies et les mentions légales, ouvrir **Documents légaux**. Chaque document a son titre, son résumé et un texte avec boutons de mise en forme. Les textes restent privés jusqu’à la publication du Studio, qui crée des versions légales séparées et auditées. **Reprendre la version publique** remplace le brouillon local du document sélectionné par le contenu public actuel. Une publication devenue obsolète est refusée pour préserver les corrections faites entre-temps.
 
 ## Configuration d’environnement
 

@@ -80,6 +80,7 @@ RSpec.describe "Navigation publique conforme à la maquette", type: :system do
     config = page.evaluate_script("JSON.parse(document.querySelector('[data-studio-config]').textContent)")
     canvas = Nokogiri::HTML5.fragment(config.fetch("initialHtml"))
     canvas.css("[data-studio-chrome]").remove
+    canvas.css("[data-studio-page]").each { |node| node.replace(node.children) }
     settings = source.settings.deep_dup
     settings["site"]["pages"]["home"]["canvas"] = { "version" => 1, "html" => canvas.to_html, "css" => config.fetch("initialCss") }
     version = Studio.change!(actor: admin, source: source, name: "Canevas enregistré", settings: settings)

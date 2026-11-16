@@ -1,6 +1,8 @@
 module LegalCenterHelper
   LEGAL_TABS = %w[cgu confidentialite cookies mentions-legales securite].freeze
 
+  def studio_legal_document(slug) = StudioLegalDocuments.preview(@studio_version, slug)
+
   def legal_rich_text(body)
     safe_join(body.to_s.split(/\n\n+/).map do |paragraph|
       lines = paragraph.lines.map(&:strip)

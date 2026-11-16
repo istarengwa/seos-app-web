@@ -23,9 +23,9 @@ RSpec.describe "Publication depuis le Studio V2", type: :system do
     draft = StudioVersion.last
     expect(draft.id).not_to eq(version.id)
     expect(draft.status).to eq("draft")
-    expect(page).to have_link("← Continuer les modifications", href: builder_admin_site_path(draft, page: "home"))
+    expect(page).to have_link("← Revenir aux modifications", href: builder_admin_site_path(draft, page: "home"))
     within_frame(find("iframe")) { expect(page).to have_css("h2", text: "Votre nouveau titre") }
-    click_button "Mettre en ligne"
+    click_button "Enregistrer et publier"
     expect(page).to have_current_path(builder_admin_site_path(draft, page: "home"))
     expect(draft.reload.status).to eq("published")
     visit root_path

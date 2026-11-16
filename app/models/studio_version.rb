@@ -15,6 +15,7 @@ class StudioVersion < ApplicationRecord
   def tokens = settings.fetch("tokens", {})
   def page(slug) = settings.fetch("pages", {}).fetch(slug, {})
   def site = settings.fetch("site", {})
+  def legal_documents = settings.fetch("legal_documents", {})
   def deleted_pages = site.fetch("deleted_pages", [])
   def available_pages = (PAGES + site.fetch("pages", {}).keys).uniq - deleted_pages - [ "fonctionnement" ]
   def chrome(area)
@@ -47,11 +48,12 @@ class StudioVersion < ApplicationRecord
     channels.zip([ 0.2126, 0.7152, 0.0722 ]).sum { |c, weight| c * weight }
   end
   def safe_settings
-    unless settings.is_a?(Hash) && (settings.keys - %w[tokens pages editorial_resets site]).empty? && tokens.is_a?(Hash) && settings.fetch("pages", {}).is_a?(Hash)
+    unless settings.is_a?(Hash) && (settings.keys - %w[tokens pages editorial_resets site legal_documents]).empty? && tokens.is_a?(Hash) && settings.fetch("pages", {}).is_a?(Hash)
       errors.add(:settings, "structure inconnue")
       return
     end
     errors.add(:settings, "document du site invalide") unless SiteDesign.valid?(settings.fetch("site", {}))
+    errors.add(:settings, "document légal incomplet ou invalide") unless StudioLegalDocuments.valid?(legal_documents)
     resets = settings.fetch("editorial_resets", [])
     unless resets.is_a?(Array) && resets.size <= PAGES.size && resets.all? { |id| id.is_a?(Integer) && ContentVersion.live.where(kind: "page", id: id).exists? }
       errors.add(:settings, "référence éditoriale invalide")

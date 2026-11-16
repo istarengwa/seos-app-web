@@ -31,7 +31,7 @@ RSpec.describe "Parcours de publication du Studio V2", type: :request do
     document["site"]["pages"]["notre-equipe"]["blocks"] << { "id" => "intro", "template" => "text", "values" => { "title" => "Notre équipe", "body" => "Nous accompagnons les voisins." } }
     saved = save_studio_version(version, document, page: "notre-equipe")
     get review_admin_site_path(saved, page: "notre-equipe")
-    expect(response.body).to include("Téléphone", "Tablette", "Ordinateur", "Mettre en ligne", builder_admin_site_path(saved, page: "notre-equipe"))
+    expect(response.body).to include("Téléphone", "Tablette", "Ordinateur", "Enregistrer et publier", builder_admin_site_path(saved, page: "notre-equipe"))
     post publish_admin_site_path(saved), params: { digest: saved.digest, live_id: "" }
     expect(response).to have_http_status(:see_other)
     expect(saved.reload.status).to eq("published")

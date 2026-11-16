@@ -16,15 +16,15 @@
           <% if algorithm %><p>Version active : <strong><%= algorithm.version %></strong>. <%= algorithm.explanation %></p><% else %><p><%= values["security-empty"] %></p><% end %>
           <%= link_to values["security-action"], account_trust_path, class: "btn btn-primary" %>
         <% else %>
-          <% document = ContentVersion.current("legal", tab) || LegalExample.document(tab) %>
+          <% document = studio_legal_document(tab) %>
           <% if document %>
             <h2><%= document.title %></h2>
-            <p class="badge"><% if document.published_at %>Version <%= document.version %> · <%= l document.published_at.to_date %><% else %>Version de travail · Exemple de la maquette<% end %></p>
-            <% if document.summary.present? %><p><%= document.summary %></p><% end %>
-            <%= legal_rich_text document.body %>
+            <p class="badge"><% if document.published_at %>Version <%= document.version %> · <%= l document.published_at.to_date %><% elsif @studio_version && @studio_version.status != "published" && @studio_version.legal_documents.key?(tab) %>Brouillon du Studio · Non publié<% else %>Version de travail · Exemple de la maquette<% end %></p>
+            <p class="legal-document-summary" <%= "hidden" if document.summary.blank? %>><%= document.summary %></p>
+            <div class="legal-document-body"><%= legal_rich_text document.body %></div>
           <% else %><h2><%= values["tab-#{tab}"] %></h2><p><%= values["empty"] %></p><% end %>
           <% if current_user&.super_admin? && !@visual_preview %>
-            <p class="legal-edit-action"><%= link_to(document ? "Modifier ce document" : "Rédiger ce document", new_admin_workbench_path(kind: "contenus", from: document&.id, document: tab), class: "btn btn-outline") %></p>
+            <p class="legal-edit-action"><%= link_to(document ? "Modifier ce document" : "Rédiger ce document", admin_site_index_path(page: "legal", document: tab), class: "btn btn-outline") %></p>
           <% end %>
           <% if tab == "cookies" %>
             <p class="notice" data-cookie-status <%= "hidden" unless @consent %>><% if @consent %>Choix enregistré le <%= l @consent.created_at.to_date %> · audience <%= @consent.analytics ? "acceptée" : "refusée" %> · médias <%= @consent.external_media ? "acceptés" : "refusés" %><% end %></p>

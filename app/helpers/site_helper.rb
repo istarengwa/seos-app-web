@@ -32,6 +32,7 @@ module SiteHelper
   def site_review_changes(version, live)
     before = live&.settings || {}
     changes = []
+    version.legal_documents.each_value { |document| changes << "Document légal : #{document['title']}" }
     old_pages = before.dig("site", "pages") || {}
     new_pages = version.site.fetch("pages", {})
     (old_pages.keys | new_pages.keys).each do |slug|
