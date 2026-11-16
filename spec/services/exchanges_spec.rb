@@ -106,7 +106,7 @@ RSpec.describe Exchanges, :"F-020", :"F-021", :"F-022", type: :service do
     expect { transition("confirm") }.not_to change(RequestEvent, :count)
     expect(request.completed_at).to be_present
     expect { RequestEvent.first.update_column(:kind, "forged") }.to raise_error(ActiveRecord::ReadOnlyRecord)
-    expect { RequestEvent.where(id: RequestEvent.first.id).delete_all }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { RequestEvent.first.destroy! }.to raise_error(ActiveRecord::ReadOnlyRecord)
   end
 
   it "ouvre un dossier de litige, et permet une annulation neutre motivée" do

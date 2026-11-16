@@ -1,7 +1,31 @@
 class CreateDiscoveryAndExchanges < ActiveRecord::Migration[8.1]
   def change
+    # Users must exist before preferences and dependent tables; keep historical filenames.
+    create_table :users do |t|
+      t.string :email, null: false
+      t.string :encrypted_password, null: false, default: ""
+      t.string :role, null: false, default: "member"
+      t.string :status, null: false, default: "pending"
+      t.string :reset_password_token
+      t.datetime :reset_password_sent_at
+      t.string :confirmation_token
+      t.datetime :confirmed_at
+      t.datetime :confirmation_sent_at
+      t.string :unconfirmed_email
+      t.integer :failed_attempts, null: false, default: 0
+      t.datetime :locked_at
+      t.timestamps
+    end
+    add_index :users, :email, unique: true
+    add_index :users, :confirmation_token, unique: true
+    add_index :users, :reset_password_token, unique: true
+    add_index :users, [ :role, :status ]
+    add_check_constraint :users, "role IN ('member', 'admin', 'super_admin')", name: "users_role"
+    add_check_constraint :users, "status IN ('pending', 'active', 'suspended', 'anonymized')", name: "users_status"
+    add_check_constraint :users, "email = lower(trim(email)) AND length(email) > 0", name: "users_normalized_email"
+
     create_table :profiles do |t|
-      t.references :user, null: false, foreign_key: true, index: { unique: true }
+      t.references :user, null: false, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true, index: { unique: true }
       t.string :public_slug, null: false, index: { unique: true }
       t.string :display_name, null: false
       t.text :bio
@@ -36,8 +60,8 @@ class CreateDiscoveryAndExchanges < ActiveRecord::Migration[8.1]
     end
     choices :category_restrictions, :existing_action, %w[review pause]
     create_table :listings do |t|
-      t.references :user, null: false, foreign_key: true
-      t.references :organization, foreign_key: true
+      t.references :user, null: false, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true
+      t.references :organization
       t.references :category, foreign_key: true
       t.string :slug, null: false, index: { unique: true }
       t.string :title
@@ -105,7 +129,7 @@ class CreateDiscoveryAndExchanges < ActiveRecord::Migration[8.1]
     end
     add_index :messages, [ :sender_id, :delivery_key ], unique: true
     create_table :notifications do |t|
-      t.references :user, null: false, foreign_key: true
+      t.references :user, null: false, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true
       t.references :service_request, foreign_key: true
       t.string :event_key, null: false
       t.string :title, null: false
@@ -115,20 +139,20 @@ class CreateDiscoveryAndExchanges < ActiveRecord::Migration[8.1]
     add_index :notifications, [ :user_id, :event_key ], unique: true
     add_column :users, :email_notifications, :boolean, null: false, default: true
     create_table :user_blocks do |t|
-      t.references :user, null: false, foreign_key: true
+      t.references :user, null: false, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true
       t.references :blocked_user, null: false, foreign_key: { to_table: :users }
       t.timestamps
     end
     add_index :user_blocks, [ :user_id, :blocked_user_id ], unique: true
     add_check_constraint :user_blocks, "user_id != blocked_user_id", name: "no_self_block"
     create_table :favorites do |t|
-      t.references :user, null: false, foreign_key: true
+      t.references :user, null: false, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true
       t.references :listing, null: false, foreign_key: true
       t.timestamps
     end
     add_index :favorites, [ :user_id, :listing_id ], unique: true
     create_table :comments do |t|
-      t.references :user, null: false, foreign_key: true
+      t.references :user, null: false, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true
       t.references :listing, null: false, foreign_key: true
       t.text :body, null: false
       t.datetime :removed_at
@@ -136,7 +160,7 @@ class CreateDiscoveryAndExchanges < ActiveRecord::Migration[8.1]
     end
     create_table :reviews do |t|
       t.references :service_request, null: false, foreign_key: true
-      t.references :author, null: false, foreign_key: { to_table: :users }
+      t.references :author, null: false, foreign_key: { to_table: :users }, foreign_key: { to_table: :users }
       t.references :reviewee, null: false, foreign_key: { to_table: :users }
       t.string :completion_answer, null: false
       t.boolean :would_reengage, null: false
@@ -166,7 +190,7 @@ class CreateDiscoveryAndExchanges < ActiveRecord::Migration[8.1]
       t.timestamps
     end
     add_index :review_ratings, [ :review_id, :review_criterion_id ], unique: true, name: "unique_review_rating"
-    add_check_constraint :review_ratings, "(not_applicable = 1 AND rating IS NULL) OR (not_applicable = 0 AND rating BETWEEN 1 AND 5 AND rating IS NOT NULL)", name: "rating_or_na"
+    add_check_constraint :review_ratings, "(not_applicable = TRUE AND rating IS NULL) OR (not_applicable = FALSE AND rating BETWEEN 1 AND 5 AND rating IS NOT NULL)", name: "rating_or_na"
     create_table :reports do |t|
       t.references :reporter, null: false, foreign_key: { to_table: :users }
       t.references :reportable, null: false, polymorphic: true
@@ -181,7 +205,7 @@ class CreateDiscoveryAndExchanges < ActiveRecord::Migration[8.1]
     choices :reports, :status, %w[open investigating resolved]
     choices :reports, :reportable_type, %w[Listing Profile Message Comment Review ServiceRequest]
     create_table :content_versions do |t|
-      t.references :author, null: false, foreign_key: { to_table: :users }
+      t.references :author, null: false, foreign_key: { to_table: :users }, foreign_key: { to_table: :users }
       t.string :kind, :slug, :title, null: false
       t.string :summary
       t.text :body, null: false

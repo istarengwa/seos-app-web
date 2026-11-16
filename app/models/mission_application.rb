@@ -1,4 +1,6 @@
 class MissionApplication < ApplicationRecord
+  include ImmutableInputs
+  immutable_inputs :volunteer_mission_id, :user_id, :message, :starts_on, :ends_on
   belongs_to :volunteer_mission
   belongs_to :user
   has_many :mission_messages, dependent: :restrict_with_exception

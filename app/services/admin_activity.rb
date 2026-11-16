@@ -26,7 +26,14 @@ class AdminActivity
   private
 
   def daily_counts(model, column, start, finish)
-    expression = Arel.sql("strftime('%Y-%m-%d %H:00:00', #{model.quoted_table_name}.#{model.connection.quote_column_name(column)})")
+    column_sql = "#{model.quoted_table_name}.#{model.connection.quote_column_name(column)}"
+    expression = Arel.sql(
+      if model.connection.adapter_name == "PostgreSQL"
+        "to_char(date_trunc('hour', #{column_sql}), 'YYYY-MM-DD HH24:MI:SS')"
+      else
+        "strftime('%Y-%m-%d %H:00:00', #{column_sql})"
+      end
+    )
     model.where(column => start..finish).group(expression).count.each_with_object(Hash.new(0)) do |(hour, count), totals|
       totals[Time.find_zone!("UTC").parse(hour).in_time_zone.to_date] += count
     end

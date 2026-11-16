@@ -5,11 +5,10 @@ class SimplifyCategoriesAndExpireListings < ActiveRecord::Migration[8.1]
     add_column :listings, :expires_at, :datetime
     add_index :listings, [ :status, :expires_at ]
 
-    execute <<~SQL.squish
-      UPDATE listings
-      SET expires_at = datetime(COALESCE(published_at, created_at), '+1 year')
-      WHERE status = 'published'
-    SQL
+    listing_model = Class.new(ActiveRecord::Base) { self.table_name = "listings" }
+    listing_model.where(status: "published").find_each do |listing|
+      listing.update_columns(expires_at: (listing.published_at || listing.created_at) + 1.year)
+    end
 
     drop_table :category_restrictions
   end

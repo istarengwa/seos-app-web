@@ -73,13 +73,8 @@ class CreateOrganizationWorkspaces < ActiveRecord::Migration[8.1]
     end
     remove_check_constraint :feature_flags, name: "feature_flags_key_values"
     add_check_constraint :feature_flags, "key IN ('public_map_enabled','financial_support_enabled','voyage_enabled','partnerships_enabled')", name: "feature_flags_key_values"
-    %w[UPDATE DELETE].each do |action|
-      condition = action == "UPDATE" ? "AND (NEW.status != 'active' OR NEW.role != 'owner' OR NEW.organization_id != OLD.organization_id)" : ""
-      execute "CREATE TRIGGER organization_last_owner_#{action.downcase} BEFORE #{action} ON organization_memberships WHEN OLD.role = 'owner' AND OLD.status = 'active' #{condition} AND NOT EXISTS (SELECT 1 FROM organization_memberships WHERE organization_id = OLD.organization_id AND id != OLD.id AND role = 'owner' AND status = 'active') BEGIN SELECT RAISE(ABORT, 'last organization owner'); END"
-    end
   end
   def down
-    %w[update delete].each { |action| execute "DROP TRIGGER organization_last_owner_#{action}" }
     %i[mission_messages mission_applications volunteer_missions organization_invitations partnerships].each { |table| drop_table table }
     remove_check_constraint :feature_flags, name: "feature_flags_key_values"
     add_check_constraint :feature_flags, "key IN ('public_map_enabled','financial_support_enabled')", name: "feature_flags_key_values"

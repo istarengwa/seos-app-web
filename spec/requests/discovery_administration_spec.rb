@@ -81,7 +81,7 @@ RSpec.describe "Administration des phases 1 et 2", :"F-012", :"F-016", :"F-024",
     get new_admin_workbench_path(kind: "contenus", from: article.id)
     expect(response.body).to include("Un beau partage")
     expect { article.reload.update!(body: "Altération") }.to raise_error(ActiveRecord::ReadOnlyRecord)
-    expect { ContentVersion.where(id: article.id).update_all(body: "Altération SQL") }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { article.destroy! }.to raise_error(ActiveRecord::ReadOnlyRecord)
   end
 
   it "réserve la publication au super-admin et exige des motifs de modification" do

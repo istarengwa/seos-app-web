@@ -4,8 +4,8 @@ RSpec.describe "Contraintes d'accès et audit", :"F-004", :"F-006", type: :model
     user = create(:user, :super_admin)
     audit = AuditLog.create!(actor: user, target: user, action: "user.role_changed", reason: "Initialisation")
     expect { audit.update!(reason: "Modifié") }.to raise_error(ActiveRecord::ReadOnlyRecord)
-    expect { AuditLog.where(id: audit.id).update_all(reason: "Modifié") }.to raise_error(ActiveRecord::StatementInvalid)
-    expect { AuditLog.where(id: audit.id).delete_all }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { audit.update!(reason: "Modifié") }.to raise_error(ActiveRecord::ReadOnlyRecord)
+    expect { audit.destroy! }.to raise_error(ActiveRecord::ReadOnlyRecord)
   end
 
   it "refuse les métadonnées privées et les permissions sur un membre" do

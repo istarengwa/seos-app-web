@@ -20,7 +20,7 @@ class CreatePointsLedger < ActiveRecord::Migration[8.1]
     end
     add_index :point_accounts, :kind, unique: true, where: "kind = 'system'", name: "one_point_system_account"
     add_check_constraint :point_accounts, "(kind = 'user' AND user_id IS NOT NULL AND balance >= 0) OR (kind = 'system' AND user_id IS NULL)", name: "point_account_owner_and_balance"
-    add_check_constraint :point_accounts, "typeof(balance) = 'integer' AND balance BETWEEN -9000000000000000 AND 9000000000000000", name: "point_balance_integer"
+    add_check_constraint :point_accounts, "balance BETWEEN -9000000000000000 AND 9000000000000000", name: "point_balance_integer"
     create_table :point_operations do |t|
       t.string :kind, null: false
       t.string :status, null: false, default: "pending"
@@ -41,9 +41,9 @@ class CreatePointsLedger < ActiveRecord::Migration[8.1]
       t.datetime :created_at, null: false
     end
     add_index :point_entries, [ :point_operation_id, :point_account_id ], unique: true, name: "one_entry_per_point_account"
-    add_check_constraint :point_entries, "typeof(amount) = 'integer' AND amount != 0 AND amount BETWEEN -999999 AND 999999", name: "point_entry_integer"
+    add_check_constraint :point_entries, "amount != 0 AND amount BETWEEN -999999 AND 999999", name: "point_entry_integer"
     create_table :point_adjustments do |t|
-      t.references :user, null: false, foreign_key: true
+      t.references :user, null: false, foreign_key: true, foreign_key: true, foreign_key: true
       t.references :proposed_by, null: false, foreign_key: { to_table: :users }
       t.references :approved_by, foreign_key: { to_table: :users }
       t.integer :amount, null: false
@@ -54,7 +54,7 @@ class CreatePointsLedger < ActiveRecord::Migration[8.1]
       t.timestamps
     end
     create_table :point_reward_claims do |t|
-      t.references :user, null: false, foreign_key: true
+      t.references :user, null: false, foreign_key: true, foreign_key: true, foreign_key: true
       t.references :point_rule_version, null: false, foreign_key: true
       t.references :reviewed_by, foreign_key: { to_table: :users }
       t.string :kind, null: false
@@ -69,7 +69,7 @@ class CreatePointsLedger < ActiveRecord::Migration[8.1]
     end
     add_index :point_reward_claims, [ :user_id, :kind, :period_key ], unique: true, name: "unique_point_reward_claim"
     create_table :point_cycle_progresses do |t|
-      t.references :user, null: false, foreign_key: true
+      t.references :user, null: false, foreign_key: true, foreign_key: true, foreign_key: true
       t.references :point_rule_version, null: false, foreign_key: true
       t.integer :cycle_number, null: false
       t.json :operation_ids, null: false, default: []

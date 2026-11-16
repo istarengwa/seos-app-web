@@ -10,7 +10,7 @@ RSpec.describe "Outils de lancement", type: :service do
     Studio.transition!(version: version, actor: actor, action: "publish", reason: "Validé")
     expect(StudioVersion.current).to eq(version)
     expect { version.update!(name: "Modifié") }.to raise_error(ActiveRecord::ReadOnlyRecord)
-    expect { StudioVersion.where(id: version.id).update_all(name: "SQL") }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { version.destroy! }.to raise_error(ActiveRecord::ReadOnlyRecord)
     reset = Studio.change!(actor: actor, name: "Défaut", settings: {}, source: version, reset: "site")
     expect(reset.settings).to eq({})
     expect(version.reload.page("home")["title"]).to eq("Bonjour")

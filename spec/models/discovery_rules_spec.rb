@@ -8,7 +8,7 @@ RSpec.describe "Règles de découverte et d’avis", type: :model do
     parent.reload.update!(active: false)
     expect(child).not_to be_publishable
     listing = create(:listing)
-    expect { listing.update_column(:estimated_points, 12) }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { ApplicationRecord.transaction(requires_new: true) { listing.update_column(:estimated_points, 12) } }.to raise_error(ActiveRecord::StatementInvalid)
     expect { create(:service_request, listing: listing, requester: listing.user) }.to raise_error(ActiveRecord::RecordInvalid)
   end
 

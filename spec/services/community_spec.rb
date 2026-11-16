@@ -18,7 +18,7 @@ RSpec.describe "Engagement communautaire" do
     record = Achievements.submit!(user: user, achievement: item, evidence: "Compte rendu privé")
     expect(record.points).to eq(10)
     expect { Achievements.submit!(user: user, achievement: item, evidence: "Autre") }.to raise_error(ActiveRecord::RecordNotUnique)
-    expect { record.update!(points: 900) }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { record.update!(points: 900) }.to raise_error(ActiveRecord::RecordInvalid)
     record.reload
     expect { Achievements.review!(record: record, actor: user, decision: "approved", reason: "Auto") }.to raise_error(Pundit::NotAuthorizedError)
     expect { Achievements.review!(record: record, actor: admin, decision: "approved", reason: "") }.to raise_error(Exchanges::Invalid)
@@ -30,7 +30,7 @@ RSpec.describe "Engagement communautaire" do
     expect(PointAccount.for!(user).balance).to eq(10)
     expect(Achievements.progress(user, item)).to eq(1)
     expect { Achievements.review!(record: record, actor: admin, decision: "reexamine", reason: "Revue") }.to raise_error(Exchanges::Invalid)
-    expect { record.reload.update!(decision: "Réécriture") }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { record.reload.update!(decision: "Réécriture") }.to raise_error(ActiveRecord::ReadOnlyRecord)
     expect(item.update(reward_key: "video")).to be(false)
     expect { quest(recurrence: "cycle") }.to raise_error(ActiveRecord::RecordInvalid, /preuve unique/)
   end

@@ -22,7 +22,7 @@ RSpec.describe Missions do
     expect { described_class.save!(mission: record, actor: candidate, attributes: { title: "Vol" }) }.to raise_error(Pundit::NotAuthorizedError)
     expect { record.update!(daily_contribution_cents: 1501) }.to raise_error(ActiveRecord::RecordInvalid)
     record.reload
-    expect { record.update_columns(daily_contribution_cents: -1) }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { ApplicationRecord.transaction(requires_new: true) { record.update_columns(daily_contribution_cents: -1) } }.to raise_error(ActiveRecord::StatementInvalid)
     described_class.transition!(mission: record.reload, actor: owner, status: "pending_review", reason: "Prêt")
     expect { described_class.transition!(mission: record, actor: owner, status: "published", reason: "Non") }.to raise_error(Pundit::NotAuthorizedError)
     described_class.transition!(mission: record, actor: admin, status: "published", reason: "Conditions vérifiées")
@@ -61,7 +61,7 @@ RSpec.describe Missions do
     expect { described_class.message!(application: application, actor: candidate, body: "Autre", key: "delivery") }.to raise_error(Exchanges::Invalid)
     described_class.message!(application: application, actor: owner, body: "Bienvenue", key: "reply")
     expect(application.mission_messages.last.ciphertext_for(:body)).not_to include("Bienvenue")
-    expect { application.update_columns(starts_on: Date.current) }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { application.update!(starts_on: Date.current) }.to raise_error(ActiveRecord::RecordInvalid)
     expect { application.mission_messages.last.update!(body: "Modifié") }.to raise_error(ActiveRecord::ReadOnlyRecord)
     described_class.decide!(application: application, actor: owner, status: "rejected", reason: "Pas de place")
     expect { described_class.message!(application: application, actor: owner, body: "Non", key: "closed") }.to raise_error(Exchanges::Invalid)

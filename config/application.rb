@@ -14,7 +14,7 @@ module SeosFrance
     config.i18n.available_locales = [ :fr ]
     config.time_zone = "Paris"
     config.action_mailer.logger = nil
-    config.active_record.schema_format = :sql
+    config.active_record.schema_format = :ruby
     # Les uploads ouvriront leurs routes authentifiées avec F-006/F-009.
     config.active_storage.draw_routes = false
     config.generators do |generator|
