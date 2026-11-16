@@ -11,8 +11,7 @@
     <% if @visual_preview %><%= tag.meta name: "studio-preview-revision", content: @visual_revision %><% end %>
     <%= favicon_link_tag "seos-logo.png", type: "image/png" %>
     <%= csrf_meta_tags %>
-    <%# A new response nonce requires a new document CSP before Studio styles can run. %>
-    <%= csp_meta_tag data: { turbo_track: "reload" } %>
+    <%= csp_meta_tag %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <% studio = @studio_version || StudioVersion.current %>
     <%= tag.meta name: "seos-theme", content: studio&.id || "default", data: { turbo_track: "reload" } %>
