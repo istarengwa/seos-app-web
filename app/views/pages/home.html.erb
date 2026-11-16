@@ -1,7 +1,6 @@
 <% if (composed_page = site_version&.site&.dig("pages", "home")) %>
 <% content_for :title, composed_page["title"] %><%= render "site/page", page: composed_page, slug: "home" %>
 <% else %>
-<%= render "site/edit_link", slug: "home" %>
 <% studio_page = (@studio_version || StudioVersion.current)&.page("home") || {} %>
 <section class="hero">
   <div class="container">

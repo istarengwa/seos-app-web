@@ -2,7 +2,6 @@
 .site-tabs [aria-current="page"] { background: var(--deep); color: var(--white); }
 .site-link-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .site-thumbnail { width: 120px; height: 85px; object-fit: contain; }
-.site-edit-link { padding-block: 12px; }
 .site-block summary { padding: 16px 0; cursor: pointer; }
 .maquette-surface { color: var(--ink); background: var(--cream); font-family: var(--font-body); overflow: clip; }
 .maquette-surface :focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }

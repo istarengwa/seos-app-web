@@ -22,7 +22,6 @@ class StudioTheme
       rules << "#{wave},#{wave_layers}{animation:seos-wave var(--wave-speed,8s) ease-in-out infinite alternate}"
       rules << "@keyframes seos-wave{from{translate:0 0}to{translate:0 var(--wave-amplitude,#{amplitude})}}"
     end
-    rules << ".topbar{background:linear-gradient(90deg,var(--deep),var(--footer))}" if tokens.key?("deep") || tokens.key?("footer")
     rules << ".maquette-surface.maquette-surface{font-family:var(--font-body)}" if tokens.key?("font-body")
     rules << ".maquette-surface :is(h1,h2,h3){font-family:var(--font-heading)}" if tokens.key?("font-heading")
     rules << "@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}"

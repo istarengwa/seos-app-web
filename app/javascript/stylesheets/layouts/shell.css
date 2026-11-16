@@ -1,7 +1,7 @@
 .app-shell { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
 .app-shell > * { flex-shrink: 0; }
 .app-shell > footer { margin-top: auto; }
-.topbar { position: absolute; inset: 0 0 auto; z-index: 50; color: var(--white); background: linear-gradient(180deg,rgba(0,47,64,.88),rgba(0,47,64,.34) 70%,transparent); border-bottom: 1px solid rgba(255,255,255,.08); backdrop-filter: blur(8px); }
+.topbar { position: absolute; inset: 0 0 auto; z-index: 50; }
 .app-shell > main { padding-top: 86px; }
 .app-shell > main > :is(.hero,.public-hero):first-child { margin-top: -86px; padding-top: 156px; }
 .app-shell > .dashboard { padding-top: 134px; }

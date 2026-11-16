@@ -1,9 +1,7 @@
 <% if page["canvas"].present? %>
-  <%= render "site/edit_link", slug: slug %>
   <%= tag.style SiteCanvasDocument.sanitize_css(page.dig("canvas", "css")), nonce: content_security_policy_nonce %>
   <%= site_canvas_html(page) %>
 <% else %>
-<%= render "site/edit_link", slug: slug %>
 <% display_blocks = page["blocks"].reject { |block| SiteDesign::RETIRED_TEMPLATES.include?(block["template"]) } %>
 <% hero_template = display_blocks.find { |block| !block["hidden"] && %w[home-0 don-0 exchange-0 points-0].include?(block["template"]) }&.fetch("template") %>
 <div class="maquette-surface"><div class="page active" data-maquette-page="<%= hero_template ? hero_template.delete_suffix("-0") : slug %>">

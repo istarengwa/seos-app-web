@@ -15,6 +15,7 @@
 @import "./components/profile_menu.css";
 @import "./components/community.css";
 @import "./components/admin_workspace.css";
+@import "./components/navigation.css";
 .studio-motion { animation: studio-breathe 8s ease-in-out infinite alternate; }
 @keyframes studio-breathe { to { opacity: .65; } }
 @media (prefers-reduced-motion: reduce) { .studio-motion { animation: none; } }

@@ -1,0 +1,39 @@
+/* The page owns the background behind the navigation. */
+.app-shell {
+  --navigation-height: 86px;
+  --navigation-ink: var(--deep);
+  --navigation-active: var(--deep);
+  --navigation-text-shadow: none;
+  --page-top-space: var(--navigation-height);
+}
+.app-shell > .topbar {
+  position: absolute;
+  inset: 0 0 auto;
+  color: var(--navigation-ink);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.app-shell > .topbar .nav-links a { color: inherit; text-shadow: var(--navigation-text-shadow); }
+.app-shell > .topbar .nav-links a[aria-current="page"] { color: var(--navigation-active); }
+.app-shell > .topbar .disclosure > summary { border-color: currentColor; }
+.app-shell > main { padding-top: var(--page-top-space); }
+.app-shell > main > :is(.hero,.public-hero):first-child { margin-top: 0; }
+
+/* Cover the direct public headers and the structured or saved Studio canvas. */
+.app-shell:has(
+  > main > :is(.hero,.public-hero,.info-hero,.travel-hero),
+  > main > .maquette-surface > .page > .site-section:first-of-type > :is(.hero,.public-hero,.info-hero,.travel-hero)
+) {
+  --navigation-ink: var(--white);
+  --navigation-active: var(--gold);
+  --navigation-text-shadow: 0 1px 3px rgba(0,30,40,.75);
+  --page-top-space: 0px;
+}
+.app-shell > main .site-section:first-of-type > :is(.info-hero,.travel-hero) > :is(.info-hero-copy,.travel-copy) {
+  padding-top: calc(var(--navigation-height) + 44px);
+}
+@media (max-width: 720px) {
+  .app-shell { --navigation-height: 72px; }
+}
