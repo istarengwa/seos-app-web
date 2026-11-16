@@ -1,0 +1,43 @@
+<p>Les durées ci-dessous concernent les données conservées par l’application. Préparez une version, simulez son effet, puis faites-la confirmer par un autre super administrateur après validation juridique.</p>
+<details open class="studio-retention-create">
+  <summary>Préparer de nouvelles durées</summary>
+  <% defaults = (RetentionPolicyVersion.current || @policies.first)&.rules || {} %>
+  <%= form_with url: admin_privacy_index_path do |form| %>
+    <%= hidden_field_tag :operation, "policy", id: nil %>
+    <%= input_field form, :name, "Nom de cette version", required: true, placeholder: "Ex. : Durées de conservation 2026", id: "retention-name" %>
+    <div class="studio-retention-fields">
+      <% RetentionPolicyVersion::PURPOSES.each do |purpose| %>
+        <div class="form-field"><%= label_tag "retention-#{purpose}", "#{retention_label(purpose)} (jours)" %><%= number_field_tag "rules[#{purpose}]", purpose == "exports" ? 1 : defaults.fetch(purpose, 30), min: 1, max: purpose == "exports" ? 1 : 3650, readonly: purpose == "exports", required: true, id: "retention-#{purpose}", class: "control" %><% if purpose == "exports" %><small>Durée fixe : un jour.</small><% end %></div>
+      <% end %>
+    </div>
+    <%= input_field form, :effective_at, "Début d’application (heure de Paris)", type: :datetime_local_field, required: true, value: 1.day.from_now.strftime("%Y-%m-%dT%H:%M"), id: "retention-start" %>
+    <%= input_field form, :expires_at, "Fin de validité (heure de Paris)", type: :datetime_local_field, required: true, value: 1.year.from_now.strftime("%Y-%m-%dT%H:%M"), id: "retention-end" %>
+    <div class="form-field studio-retention-check"><%= form.check_box :legal_reviewed, id: "retention-reviewed" %><%= form.label :legal_reviewed, "Ces durées ont été validées juridiquement pour les données indiquées.", for: "retention-reviewed" %></div>
+    <%= form.button "Créer la version de conservation", class: "btn btn-primary" %>
+  <% end %>
+</details>
+<h3>Versions de conservation</h3>
+<% if @policies.empty? %><p>Aucune version de conservation n’a été créée.</p><% end %>
+<% @policies.each do |policy| %>
+  <article class="studio-retention-version">
+    <h4><%= policy.name %></h4>
+    <p><strong><%= { "draft" => "Brouillon", "simulated" => "Simulation prête", "published" => "Confirmée" }.fetch(policy.status) %></strong> · Du <%= l policy.effective_at, format: :short %> au <%= l policy.expires_at, format: :short %></p>
+    <dl><% policy.rules.each do |purpose, days| %><dt><%= retention_label(purpose) %></dt><dd><%= pluralize(days, "jour", plural: "jours") %><% if policy.simulation.dig("counts", purpose) %> · <%= policy.simulation["counts"][purpose] %> éléments concernés par la simulation<% end %></dd><% end %></dl>
+    <% unless policy.status == "published" %>
+      <%= form_with url: admin_privacy_index_path do |form| %>
+        <%= hidden_field_tag :operation, "simulate", id: nil %><%= hidden_field_tag :record_id, policy.id, id: nil %>
+        <%= input_field form, :reason, "Motif de la simulation", id: "retention-#{policy.id}-simulation-reason", required: true, maxlength: 500, placeholder: "Ex. : vérification des durées proposées" %>
+        <%= form.button "Simuler ces durées", class: "btn btn-outline" %>
+      <% end %>
+      <% if policy.status == "simulated" && policy.legal_reviewed_at %>
+        <% if policy.created_by_id != current_user.id %>
+          <%= form_with url: admin_privacy_index_path do |form| %>
+            <%= hidden_field_tag :operation, "publish", id: nil %><%= hidden_field_tag :record_id, policy.id, id: nil %>
+            <%= input_field form, :reason, "Motif de confirmation", id: "retention-#{policy.id}-confirmation-reason", required: true, maxlength: 500 %>
+            <%= form.button "Confirmer ces durées", class: "btn btn-primary" %>
+          <% end %>
+        <% else %><p>Un autre super administrateur doit ouvrir ce panneau pour confirmer ces durées.</p><% end %>
+      <% end %>
+    <% end %>
+  </article>
+<% end %>

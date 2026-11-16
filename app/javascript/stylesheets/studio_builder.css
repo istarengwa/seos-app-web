@@ -335,3 +335,21 @@
 .studio-legal-body :is(p,ul) { margin: 0 0 12px; }
 .studio-legal-body mark { background: #fff3c8; }
 .studio-legal-reload { min-height: 44px; width: 100%; margin-bottom: 14px; padding: 7px; border: 1px solid #b9d0d6; border-radius: 8px; background: #fff; color: #355a66; font: inherit; font-size: .72rem; cursor: pointer; }
+.studio-retention-dialog { width: min(840px,calc(100vw - 32px)); max-width: calc(100vw - 32px); max-height: 90dvh; padding: 24px; border: 1px solid #b9d0d6; border-radius: 20px; background: #fff; color: #173947; overflow: auto; }
+.studio-retention-dialog::backdrop { background: #032f3e90; }
+.studio-retention-dialog > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.studio-retention-dialog h2 { margin: 0; font-size: 1.6rem; }
+.studio-retention-dialog button { min-height: 44px; cursor: pointer; }
+.studio-retention-dialog > header button { padding: 8px 14px; border: 1px solid #b9d0d6; border-radius: 8px; background: #f5fafb; color: #173947; }
+.studio-retention-dialog p { font-size: .85rem; line-height: 1.65; }
+.studio-retention-dialog summary { cursor: pointer; min-height: 44px; font-weight: 700; }
+.studio-retention-dialog form { margin: 12px 0 24px; }
+.studio-retention-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 20px; }
+.studio-retention-version { margin-top: 16px; padding: 18px; border: 1px solid #d0e0e3; border-radius: 12px; }
+.studio-retention-version h4 { margin: 0; }
+.studio-retention-version dl { font-size: .8rem; }
+.studio-retention-version dd { margin: 0 0 12px; color: #526b75; }
+.studio-retention-check { display: flex; align-items: center; gap: 10px; }
+.studio-retention-check input { flex: 0 0 22px; width: 22px; min-height: 22px; }
+.studio-retention-dialog .control::placeholder { color: #617680; opacity: 1; }
+@media(max-width:600px) { .studio-retention-fields { grid-template-columns: minmax(0,1fr); } .studio-retention-dialog { padding: 16px; } }

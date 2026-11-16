@@ -287,3 +287,19 @@
   .community-review-card dl { grid-template-columns: minmax(0,1fr); }
 }
 @media(prefers-reduced-motion:reduce) { .admin-workspace .control,.admin-page-tabs a { transition: none; } }
+
+.admin-overview-tabs { position: sticky; top: 12px; z-index: 5; flex-wrap: wrap; overflow: visible; box-shadow: 0 8px 24px #173e4c0b; }
+.admin-overview-tabs a { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 10px 17px; border-radius: 12px; color: var(--deep); font-size: .85rem; font-weight: 700; text-decoration: none; }
+.admin-overview-tabs a[aria-selected="true"] { background: var(--deep); color: white; }
+.admin-overview-tabs a:focus-visible { outline: 3px solid var(--deep); outline-offset: 3px; }
+.admin-access-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; align-items: start; }
+.admin-access-card { min-width: 0; }
+.admin-access-card h3 { margin-top: 0; }
+.admin-workspace .admin-access-card form { padding: 0; border: 0; background: transparent; box-shadow: none; }
+.admin-access-card .control::placeholder { color: #617680; opacity: 1; }
+.admin-field-help { margin: -8px 0 22px; color: #526b75; font-size: .82rem; line-height: 1.65; }
+.admin-access-history { margin-top: 32px; }
+.admin-access-history h4 { margin-top: 0; }
+.admin-activity-summary .card { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.admin-activity-summary .card > :is(strong,span) { margin: 0; }
+.admin-summary-action { display: inline-flex; align-items: center; min-height: 44px; margin-top: auto; padding-top: 8px; font-weight: 700; }

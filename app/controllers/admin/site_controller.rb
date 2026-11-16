@@ -6,6 +6,7 @@ module Admin
     def index
       version = workspace_version || Studio.change!(actor: current_user, settings: {}, name: "Éditeur visuel", source: StudioVersion.current)
       options = { page: params[:page].presence || "home" }
+      options[:panel] = "retention" if params[:panel] == "retention"
       options[:document] = params[:document] if ContentVersion::LEGAL_SLUGS.include?(params[:document])
       redirect_to builder_admin_site_path(version, **options), status: :see_other
     end

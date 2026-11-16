@@ -18,6 +18,7 @@ module Admin
 
     def builder
       @version = @source
+      @policies = RetentionPolicyVersion.order(id: :desc).limit(30)
       @slug = params[:page].presence || "home"
       raise ActiveRecord::RecordNotFound unless @source.available_pages.include?(@slug)
       assets = StudioAsset.includes(image_attachment: :blob).order(id: :desc)

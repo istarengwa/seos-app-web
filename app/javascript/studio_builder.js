@@ -4,6 +4,7 @@ import "./stylesheets/studio_builder.css"
 import french from "grapesjs/locale/fr.mjs"
 import { registerWave, installControls, waveSelector, isWave } from "./studio_editor_controls"
 import { installLegalEditor } from "./studio_legal_editor"
+import { installRetention } from "./studio_retention"
 
 const root = document.querySelector("[data-studio-builder]")
 
@@ -13,6 +14,7 @@ if (root) {
   const status = root.querySelector("[data-studio-status]")
   const saveButton = root.querySelector("[data-studio-save]")
   const csrf = document.querySelector("meta[name='csrf-token']")?.content
+  installRetention(root, csrf)
   let dirty = false
   let saving = false
   let ready = false

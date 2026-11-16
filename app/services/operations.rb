@@ -1,7 +1,8 @@
 class Operations
   def self.preview!(actor:, ids:, reason:)
     raise Pundit::NotAuthorizedError unless actor.permission?("operations.manage")
-    ids = ids.map(&:to_i).uniq
+    raise Exchanges::Invalid, "Indiquez les numéros des membres, par exemple 12, 34, 56. Les noms et les adresses e-mail ne sont pas acceptés ici." unless ids.all? { |id| id.to_s.match?(/\A#?[1-9]\d*\z/) }
+    ids = ids.map { |id| id.to_s.delete_prefix("#").to_i }.uniq
     raise Exchanges::Invalid, "Sélectionnez entre 1 et 20 membres." unless ids.size.between?(1, 20)
     users = User.where(id: ids).order(:id).to_a
     raise Exchanges::Invalid, "Seuls les membres actifs peuvent être suspendus." unless users.size == ids.size && users.all? { |user| user.member? && user.active? && user.id != actor.id }

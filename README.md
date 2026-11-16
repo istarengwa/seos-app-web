@@ -67,6 +67,12 @@ Ces comptes sont actifs et confirmés. Le jeu local comprend aussi des profils, 
 
 Les échanges peuvent se faire sous forme de don, de troc ou de Points Services. Les transferts de points accompagnent la confirmation de l’échange ; les récompenses et les ajustements sont enregistrés dans le portefeuille. Le parrainage actuel utilise un lien personnel permanent, accessible depuis l’espace Confiance.
 
+### Gérer la plateforme
+
+La **Vue d’ensemble** de l’administration comporte les onglets **Activité**, **Outils de gestion**, **Accès des membres**, **Demandes de données** et **Journal d’audit**, selon les permissions du compte. Les accès des membres sont réservés aux super administrateurs : suspension groupée avec prévisualisation et seconde confirmation, ou blocage temporaire d’une adresse e-mail. Les champs indiquent les formats attendus avec des exemples.
+
+Les moteurs de recherche et robots d’IA peuvent parcourir les pages publiques par défaut. Cette configuration est définie dans le code ; les espaces privés et les aperçus administratifs restent exclus.
+
 ### Modifier le site avec le Studio V2
 
 1. Se connecter avec le super-admin, ouvrir **Administration → Outils → Éditeur visuel**.
@@ -80,6 +86,8 @@ Les modifications deviennent publiques après cette dernière confirmation. Les 
 Les réglages courants sont présentés en français dans **Style** ; les propriétés CSS détaillées restent dans **Avancé → Réglages techniques**. Les vagues existantes se sélectionnent dans la page ou dans **Structure** : direction, courbure, hauteur, couleur et inclinaison sont réglables. Les boutons miroir retournent aussi les autres éléments. Un changement de page enregistre les modifications en cours ; une erreur d’enregistrement maintient la page ouverte.
 
 Pour les CGU, la confidentialité, les cookies et les mentions légales, ouvrir **Documents légaux**. Chaque document a son titre, son résumé et un texte avec boutons de mise en forme. Les textes restent privés jusqu’à la publication du Studio, qui crée des versions légales séparées et auditées. **Reprendre la version publique** remplace le brouillon local du document sélectionné par le contenu public actuel. Une publication devenue obsolète est refusée pour préserver les corrections faites entre-temps.
+
+Le bouton **Durées de conservation des données**, dans ce même panneau, permet de préparer et simuler les réglages de conservation, exprimés en jours. Leur activation conserve la validation juridique et la confirmation par un autre super administrateur. Les demandes personnelles d’accès, d’export ou d’effacement se traitent dans **Vue d’ensemble → Demandes de données**. Les anciennes entrées « Journal & textes légaux » et « Confidentialité » ont été retirées du menu.
 
 ## Configuration d’environnement
 

@@ -1,6 +1,6 @@
 class PartnershipsController < ApplicationController
   before_action do
-    @indexable = CrawlerPolicy.current&.search_enabled != false
+    @indexable = true
     @canonical = request.base_url + request.path
   end
   def show

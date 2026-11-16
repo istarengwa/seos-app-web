@@ -11,14 +11,16 @@ RSpec.describe "Délégations et garde-fous de la phase 7", type: :request do
     end
     grant(admin, "privacy.manage")
     get admin_privacy_index_path
-    expect(response.body).to include("Demandes de droits")
+    expect(response).to redirect_to(admin_root_path(tab: "data"))
+    follow_redirect!
+    expect(response.body).to include("Demandes de données personnelles")
     expect(response.body).not_to include("Nouvelle politique")
     post admin_privacy_index_path, params: { operation: "policy", rules: "{}" }
     expect(response).to have_http_status(:forbidden)
     admin.admin_permission_grants.update_all(revoked_at: Time.current)
     grant(admin, "privacy.rules")
     get admin_privacy_index_path
-    expect(response.body).not_to include("Demandes de droits")
+    expect(response).to redirect_to(admin_root_path(tab: "tools"))
     task = ProviderErasureTask.create!(data_request: Privacy.request!(user: user, kind: "erasure", details: ""), provider: "google")
     post admin_privacy_index_path, params: { operation: "provider", record_id: task.id, response: "OK", reason: "Validation" }
     expect(response).to have_http_status(:forbidden)
@@ -70,16 +72,17 @@ RSpec.describe "Délégations et garde-fous de la phase 7", type: :request do
     post admin_operations_path, params: { operation: "block", email: "abuse@example.test", expires_at: 1.day.from_now, reason: "Abus documenté" }
     expect(LoginBlock.blocked?("abuse@example.test")).to be(true)
     post admin_operations_path, params: { operation: "crawlers", search_enabled: "0", training_enabled: "1", reason: "Recette" }
+    expect(response).to have_http_status(:unprocessable_content)
     get "/robots.txt"
-    expect(response.body).to include("User-agent: *\nDisallow: /", "User-agent: GPTBot\nDisallow: /compte")
+    expect(response.body).to include("User-agent: *\nAllow: /", "User-agent: GPTBot\nAllow: /\nDisallow: /compte")
     post admin_operations_path, params: { operation: "invalid" }
     expect(response).to have_http_status(:unprocessable_content)
     get admin_operations_path(resource: "user", q: user.id)
-    expect(response.body).to include("1 résultats")
+    expect(response).to redirect_to(admin_root_path(tab: "activity"))
     get admin_operations_path(resource: "user", format: "csv")
-    expect(response).to have_http_status(:unprocessable_content)
+    expect(response).to redirect_to(admin_root_path(tab: "activity"))
     get admin_operations_path(resource: "missing")
-    expect(response).to have_http_status(:forbidden)
+    expect(response).to redirect_to(admin_root_path(tab: "activity"))
   end
   it "réserve la révélation au super-admin et respecte les permissions du Studio" do
     grant(admin, "users.read")

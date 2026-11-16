@@ -15,11 +15,8 @@ module AdminNavigationHelper
       ].compact },
       { label: "Outils", links: [
         workbench_nav("Catégories", "categories"),
-        workbench_nav("Journal & textes légaux", "contenus"),
         (admin_nav_item("Éditeur visuel", admin_site_index_path, controller_path.in?(%w[admin/site admin/visual_studio])) if current_user.super_admin?),
         (admin_nav_item("Page partenaires", edit_admin_partnership_page_path, controller_path == "admin/partnership_pages") if current_user.super_admin?),
-        nav_if("Confidentialité", admin_privacy_index_path, %w[privacy.manage privacy.rules], "admin/privacy"),
-        (admin_nav_item("Supervision", admin_operations_path, controller_path == "admin/operations") if current_user.super_admin?),
         (admin_nav_item("Administrateurs", super_admin_administrators_path, controller_path == "super_admin/administrators") if current_user.super_admin?)
       ].compact }
     ]

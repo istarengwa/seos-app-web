@@ -11,7 +11,7 @@ RSpec.describe "Navigation d’administration", type: :request do
     navigation = desktop_navigation
     expect(navigation.css(".admin-nav-group > summary span:first-child").map(&:text)).to eq([ "Essentiel", "Communauté", "Outils" ])
     expect(navigation.text).to include("Quêtes & chaînes", "Éditeur visuel", "Page partenaires")
-    expect(navigation.text).not_to include("Kit UI/UX", "Pages et sections", "Carte publique")
+    expect(navigation.text).not_to include("Kit UI/UX", "Pages et sections", "Carte publique", "Journal & textes légaux", "Confidentialité")
     expect(navigation.css("a").map { |link| link["href"] }.uniq.size).to eq(navigation.css("a").size)
 
     get admin_site_index_path

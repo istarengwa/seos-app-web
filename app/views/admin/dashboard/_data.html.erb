@@ -1,0 +1,27 @@
+<h2>Demandes de données personnelles</h2>
+<p>Répondez aux demandes d’accès, de correction ou d’effacement envoyées par les membres.</p>
+<% if @requests.empty? %><p class="empty-state">Aucune demande à traiter.</p><% end %>
+<% @requests.each do |record| %>
+  <article class="card">
+    <h3><%= public_name(record.user) %> · <%= human_value(record.kind) %></h3>
+    <p><strong><%= human_value(record.status) %></strong> · Réponse attendue avant le <%= l record.response_due_at, format: :short %></p>
+    <% if record.details.present? %><p><%= record.details %></p><% end %>
+    <% if record.response.present? %><p><strong>Réponse :</strong> <%= record.response %></p><% end %>
+    <% if record.preview.present? %><p><%= record.preview["listings"] %> annonces concernées. <%= record.preview["retained"] %></p><% end %>
+    <%= form_with url: admin_privacy_index_path do |form| %>
+      <%= hidden_field_tag :record_id, record.id, id: nil %>
+      <%= select_field form, :operation, "Action", [["Préparer la décision", "review"], ["Seconde validation et exécution", "execute"], ["Préparer l’export", "export"]], id: "request-#{record.id}-action" %>
+      <%= input_field form, :response, "Réponse au demandeur", type: :text_area, id: "request-#{record.id}-response", maxlength: 3000 %>
+      <%= form.button "Traiter la demande", class: "btn btn-outline" %>
+    <% end %>
+    <% record.provider_erasure_tasks.each do |task| %>
+      <p>Confirmation du prestataire <%= task.provider %> · <%= human_value(task.status) %></p>
+      <%= form_with url: admin_privacy_index_path do |form| %>
+        <%= hidden_field_tag :operation, "provider", id: nil %><%= hidden_field_tag :record_id, task.id, id: nil %>
+        <%= input_field form, :response, "Confirmation du prestataire", required: true, id: "provider-#{task.id}-response" %>
+        <%= input_field form, :reason, "Motif", required: true, id: "provider-#{task.id}-reason" %>
+        <%= form.button "Enregistrer la confirmation", class: "btn btn-outline" %>
+      <% end %>
+    <% end %>
+  </article>
+<% end %>

@@ -149,8 +149,10 @@ RSpec.describe "Modération quotidienne", type: :request do
     delete destroy_user_session_path
     login create(:user, :super_admin)
     get admin_operations_path(resource: "user")
-    expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Explorer les registres", "Opérations sensibles")
+    expect(response).to redirect_to(admin_root_path(tab: "activity"))
+    follow_redirect!
+    expect(response.body).to include("Accès des membres", "Adresse e-mail à bloquer")
+    expect(response.body).not_to include("Explorer les registres", "Opérations sensibles")
     expect(response.body).not_to include(admin.email)
   end
   it "affiche le score publié et masque les projections retirées ainsi que les preuves privées" do

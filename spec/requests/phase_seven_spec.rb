@@ -44,14 +44,15 @@ RSpec.describe "Parcours de confidentialité et pilotage", type: :request do
     post account_reauthentication_path, params: { password: "UnMotDePasseSolide!42" }
     expect(response).to redirect_to(account_root_path)
   end
-  it "masque les membres, contrôle la révélation et borne les exports" do
+  it "redirige l’ancienne supervision, contrôle la révélation et retire les exports des registres" do
     login user
     get admin_operations_path
     expect(response).to have_http_status(:forbidden)
     delete destroy_user_session_path
     login admin
     get admin_operations_path(resource: "user")
-    expect(response).to have_http_status(:ok)
+    expect(response).to redirect_to(admin_root_path(tab: "activity"))
+    follow_redirect!
     expect(response.body).not_to include(user.email)
     get user_admin_operation_path(user)
     expect(response.body).to include(user.masked_email)
@@ -59,9 +60,9 @@ RSpec.describe "Parcours de confidentialité et pilotage", type: :request do
     post user_admin_operation_path(user), params: { reason: "Support du membre" }
     expect(response.body).to include(user.email)
     get admin_operations_path(resource: "user", format: "csv", reason: "Comptage")
-    expect(response).to have_http_status(:ok)
+    expect(response).to redirect_to(admin_root_path(tab: "activity"))
     expect(response.body).not_to include(user.email)
-    expect(AuditLog.where(action: "operations.export").count).to eq(1)
+    expect(AuditLog.where(action: "operations.export")).not_to exist
   end
   it "offre une prévisualisation privée et garde la publication sous contrôle" do
     login admin
@@ -86,7 +87,7 @@ RSpec.describe "Parcours de confidentialité et pilotage", type: :request do
     record = Privacy.request!(user: user, kind: "withdrawal", details: "Retrait")
     login admin
     get admin_privacy_index_path
-    expect(response).to have_http_status(:ok)
+    expect(response).to redirect_to(admin_site_index_path(page: "legal", panel: "retention"))
     post admin_privacy_index_path, params: { operation: "review", record_id: record.id, response: "Retrait des publications" }
     expect(record.reload.status).to eq("reviewed")
     post admin_privacy_index_path, params: { operation: "policy", name: "Revue", rules: RetentionPolicyVersion::PURPOSES.index_with { |purpose| purpose == "exports" ? 1 : 30 }.to_json, effective_at: 1.hour.from_now, expires_at: 1.year.from_now }
@@ -94,6 +95,8 @@ RSpec.describe "Parcours de confidentialité et pilotage", type: :request do
     post admin_privacy_index_path, params: { operation: "simulate", record_id: RetentionPolicyVersion.last.id, reason: "Test" }
     expect(response).to have_http_status(:see_other)
     get admin_privacy_index_path
+    follow_redirect!
+    follow_redirect!
     expect(response.body).to include("Revue")
   end
 end

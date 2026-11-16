@@ -19,7 +19,7 @@ class AdminActivity
     scope = super_admin ? Listing.all : Listing.where.not(status: "draft")
     @listing_statuses = scope.group(:status).count
     @supervision = if super_admin
-      { organizations_pending: Organization.where(status: "pending").count, published_missions: VolunteerMission.where(status: "published").count, open_reports: Report.where.not(status: "resolved").count }
+      { members: User.member.count, organizations_pending: Organization.where(status: "pending").count, published_missions: VolunteerMission.where(status: "published").count, open_reports: Report.where.not(status: "resolved").count }
     end
   end
 
