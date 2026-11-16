@@ -9,6 +9,9 @@
 
 # Ignore all environment files.
 /.env*
+**/.env*
+/backups/
+/coverage/
 
 # Ignore all default key files.
 /config/master.key
