@@ -5,13 +5,12 @@ class SeoController < ApplicationController
     render formats: :xml
   end
   def robots
-    policy = CrawlerPolicy.current
     private_rules = PRIVATE_PATHS.map { |path| "Disallow: #{path}\n" }.join
-    rules = "User-agent: *\n#{policy&.search_enabled == false ? "Disallow: /\n" : private_rules}"
-    %w[GPTBot Google-Extended ClaudeBot CCBot].each do |bot|
-      rules += "User-agent: #{bot}\n#{policy&.training_enabled == true ? private_rules : "Disallow: /\n"}"
-    end
-    rules += "User-agent: OAI-SearchBot\n#{policy&.search_enabled == false ? "Disallow: /\n" : "Allow: /annonces\n#{private_rules}"}Sitemap: #{sitemap_url}\n"
+    # Public content is open to search and AI crawlers. Account areas stay private.
+    rules = [ "*", "GPTBot", "Google-Extended", "ClaudeBot", "CCBot", "OAI-SearchBot" ].map do |bot|
+      "User-agent: #{bot}\nAllow: /\n#{private_rules}\n"
+    end.join
+    rules += "Sitemap: #{sitemap_url}\n"
     render plain: rules
   end
 end

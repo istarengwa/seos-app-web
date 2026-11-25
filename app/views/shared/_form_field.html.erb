@@ -3,7 +3,8 @@
 <% help_id = "#{form.object_name}_#{attribute}_help" %>
 <div class="form-field">
   <%= form.label attribute, label %>
-  <%= form.public_send(kind, attribute, **options.merge(class: "control", aria: { invalid: errors.any?, describedby: [ (error_id if errors.any?), (help_id if local_assigns[:help]) ].compact.join(" ").presence })) %>
+  <% field_options = options.merge(class: "control", aria: { invalid: errors.any?, describedby: [ (error_id if errors.any?), (help_id if local_assigns[:help]) ].compact.join(" ").presence }) %>
+  <% if kind == :password_field %><div class="password-control" data-controller="password-visibility"><%= form.public_send(kind, attribute, **field_options.merge(data: field_options.fetch(:data, {}).merge(password_visibility_target: "input"))) %><%= render "shared/password_toggle", input_id: field_options[:id] || form.field_id(attribute) %></div><% else %><%= form.public_send(kind, attribute, **field_options) %><% end %>
   <% if local_assigns[:help] %><span class="help" id="<%= help_id %>"><%= help %></span><% end %>
   <% if errors.any? %><span class="field-error" id="<%= error_id %>"><%= errors.join(". ") %></span><% end %>
 </div>

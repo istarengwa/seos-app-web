@@ -10,6 +10,7 @@ class NotificationEmailJob < ApplicationJob
   end
   private
   def deliver_notice(notification)
+    return unless AppFeatures.notice_allowed?(notification)
     return if notification.emailed_at || !notification.user.email_notifications? || !notification.user.active_for_authentication?
     NotificationMailer.notice(notification).deliver_now
     notification.update!(emailed_at: Time.current)

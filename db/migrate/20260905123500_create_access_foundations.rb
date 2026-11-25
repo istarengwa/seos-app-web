@@ -57,15 +57,5 @@ class CreateAccessFoundations < ActiveRecord::Migration[8.1]
       t.json :metadata, null: false, default: {}
       t.datetime :created_at, null: false
     end
-    reversible do |direction|
-      direction.up do
-        execute "CREATE TRIGGER audit_logs_no_update BEFORE UPDATE ON audit_logs BEGIN SELECT RAISE(ABORT, 'audit_logs are append only'); END"
-        execute "CREATE TRIGGER audit_logs_no_delete BEFORE DELETE ON audit_logs BEGIN SELECT RAISE(ABORT, 'audit_logs are append only'); END"
-      end
-      direction.down do
-        execute "DROP TRIGGER IF EXISTS audit_logs_no_update"
-        execute "DROP TRIGGER IF EXISTS audit_logs_no_delete"
-      end
-    end
   end
 end

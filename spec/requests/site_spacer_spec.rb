@@ -5,16 +5,10 @@ RSpec.describe "Sections vides du Studio", type: :request do
     admin = create(:user, :super_admin)
     login admin
     source = Studio.change!(actor: admin, settings: {}, name: "Espaces")
-    patch admin_site_path(source), params: { operation: "page", page: "communaute", template: "spacer" }
-    expect(response).to have_http_status(:see_other)
-    draft = StudioVersion.last
-    block = draft.site.dig("pages", "communaute", "blocks").last
-    get edit_admin_site_path(draft, page: "communaute", section: block["id"])
-    expect(response.body).to include("Hauteur sur ordinateur (px)", "Hauteur sur téléphone (px)")
-    get visual_admin_site_path(draft, page: "communaute")
+    page = SiteDesign.default_page("communaute")
+    page["blocks"] << { "id" => "space", "template" => "spacer", "values" => { "height" => "240", "mobile_height" => "64" } }
+    post builder_save_admin_site_path(source), params: { document: { "site" => { "pages" => { "communaute" => page } } }.to_json, digest: source.digest, page: "communaute" }
     expect(response).to have_http_status(:ok)
-    patch admin_site_path(draft), params: { operation: "page", page: "communaute", block_id: block["id"], block_action: "save", values: { height: "240", mobile_height: "64" } }
-    expect(response).to have_http_status(:see_other)
     version = StudioVersion.last
     %w[validate publish].each { |action| Studio.transition!(version: version, actor: admin, action: action, reason: "Vérifier les espacements") }
     get community_path

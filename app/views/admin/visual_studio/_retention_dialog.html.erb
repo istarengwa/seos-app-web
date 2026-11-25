@@ -1,0 +1,5 @@
+<dialog class="studio-retention-dialog" data-studio-retention aria-labelledby="retention-dialog-title" <%= 'data-open-on-load' if params[:panel] == 'retention' %>>
+  <header><h2 id="retention-dialog-title">Conservation des données</h2><button type="button" data-retention-close aria-label="Fermer les durées de conservation">Fermer</button></header>
+  <p role="status" aria-live="polite" data-retention-status></p>
+  <div data-retention-content><%= render "admin/privacy/retention" %></div>
+</dialog>

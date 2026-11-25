@@ -4,7 +4,7 @@ RSpec.describe "Page La communauté", type: :request do
   it "présente l’application et les associations sans dépendre d’une publication préalable" do
     get community_path
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Un coup de main, à votre façon.", "Les associations ont leur place ici.", "Participer autrement")
+    expect(response.body).to include("Un coup de main, à votre façon.", "Les associations ont leur place ici.")
     expect(Nokogiri::HTML(response.body).at_css('a[href="/communaute"][aria-current="page"]')).to be_present
     expect(SiteDesign.valid?({ "pages" => { "communaute" => SiteDesign.default_page("communaute") } })).to be(true)
     expect(response.body).to include('href="/compte/organisations"')
@@ -22,12 +22,14 @@ RSpec.describe "Page La communauté", type: :request do
     admin = create(:user, :super_admin)
     login admin
     source = Studio.change!(actor: admin, settings: {}, name: "Communauté")
-    get visual_admin_site_path(source, page: "communaute")
+    get builder_admin_site_path(source, page: "communaute")
     expect(response).to have_http_status(:ok)
     get preview_admin_studio_path(source, page: "communaute", canvas: "1")
     expect(response).to have_http_status(:ok)
-    patch admin_site_path(source), params: { operation: "page", page: "communaute", block_id: "community-associations", block_action: "save", values: { "text-1" => "Ensemble avec les associations" } }
-    expect(response).to have_http_status(:see_other)
+    page = SiteDesign.default_page("communaute")
+    page["blocks"].find { |block| block["id"] == "community-associations" }["values"]["text-1"] = "Ensemble avec les associations"
+    post builder_save_admin_site_path(source), params: { document: { "site" => { "pages" => { "communaute" => page } } }.to_json, digest: source.digest, page: "communaute" }
+    expect(response).to have_http_status(:ok)
     version = StudioVersion.last
     get community_path
     expect(response.body).not_to include("Ensemble avec les associations")

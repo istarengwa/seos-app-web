@@ -33,13 +33,5 @@ class CreateLaunchTools < ActiveRecord::Migration[8.1]
     end
     add_index :google_identities, :uid, unique: true
     add_index :google_identities, :user_id, unique: true, name: "one_google_identity_per_user"
-    reversible do |direction|
-      direction.up do
-        %w[studio_versions retention_policy_versions].each do |table|
-          execute "CREATE TRIGGER #{table}_no_update BEFORE UPDATE ON #{table} WHEN OLD.status = 'published' BEGIN SELECT RAISE(ABORT, 'published version immutable'); END"
-          execute "CREATE TRIGGER #{table}_no_delete BEFORE DELETE ON #{table} WHEN OLD.status = 'published' BEGIN SELECT RAISE(ABORT, 'published version immutable'); END"
-        end
-      end
-    end
   end
 end

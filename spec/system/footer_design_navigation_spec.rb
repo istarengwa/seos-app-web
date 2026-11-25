@@ -18,7 +18,7 @@ RSpec.describe "Design après navigation depuis le footer", type: :system do
       within("footer") { click_link "Le concept" }
       expect(page).to have_css("#presentation video")
       expect(page.evaluate_script("getComputedStyle(document.querySelector('#site-section-home-4 > section')).backgroundColor")).to eq("rgb(0, 73, 97)")
-      within("footer") { click_link "Chaîne d’entraide" }
+      within("footer") { click_link "Chaîne d’entraide", href: "/#chaines" }
       expect(page).to have_css(".chain-example")
       expect(page.evaluate_script("getComputedStyle(document.querySelector('#site-section-home-4 > section')).backgroundColor")).to eq("rgb(0, 73, 97)")
       within("footer") { click_link "Voyage solidaire" }

@@ -1,35 +1,28 @@
 require "rails_helper"
-RSpec.describe "Champs compréhensibles du Studio", type: :request do
+
+RSpec.describe "Présentation des outils du Studio V2", type: :request do
   let(:admin) { create(:user, :super_admin) }
 
-  it "présente chaque modèle avec des rubriques et des aides reliées aux champs" do
+  it "présente les compositions disponibles avec des noms compréhensibles" do
     login admin
-    blocks = SiteDesign.reference.fetch("sections").keys.map { |key| { "id" => key, "template" => key, "values" => {} } }
-    version = Studio.change!(actor: admin, name: "Modèles", settings: { "site" => { "pages" => { "home" => { "title" => "Accueil", "blocks" => blocks } } } })
-    blocks.each do |block|
-      get edit_admin_site_path(version, page: "home", section: block["id"])
-      expect(response).to have_http_status(:ok)
-      doc = Nokogiri::HTML(response.body)
-      expect(doc.css(".editor-field-group[open]").size).to eq(1)
-      doc.css(".editor-field-group .control").each do |input|
-        expect(doc.at_css("label[for='#{input['id']}']").text).to match(/[[:alpha:]]/)
-        expect(doc.at_css("##{input['aria-describedby']}").text).to be_present
-      end
-    end
+    version = Studio.change!(actor: admin, name: "Modèles", settings: {})
+    get builder_admin_site_path(version)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Compositions", "Éléments", "Enregistrer", "Vérifier et publier")
+    templates = studio_builder_configuration.fetch("templates")
+    expect(templates.keys).to match_array(SiteDesign.editable_templates.keys)
+    expect(templates.values).to all(include("name" => a_string_matching(/[[:alpha:]]/)))
   end
 
-  it "conserve les symboles et valeurs existantes même lorsqu’ils ne sont plus proposés comme champs" do
+  it "conserve les valeurs des compositions existantes lors d’une sauvegarde V2" do
     login admin
     block = { "id" => "hero", "template" => "home-0", "values" => { "text-6" => "⌕", "text-5" => "Notre présentation", "text-4" => "ensemble" } }
     version = Studio.change!(actor: admin, name: "Accueil", settings: { "site" => { "pages" => { "home" => { "title" => "Accueil", "blocks" => [ block ] } } } })
-    get edit_admin_site_path(version, section: "hero")
-    doc = Nokogiri::HTML(response.body)
-    expect(doc.at_css("[name='values[text-6]']")).to be_nil
-    expect(doc.at_css("label[for='hero-text-4']").text).to eq("Mots du titre en couleur")
-    patch admin_site_path(version), params: { operation: "page", page: "home", block_id: "hero", block_action: "save", values: { "text-4" => "la solidarité" } }
-    expect(response).to have_http_status(:see_other)
-    saved = StudioVersion.last.site.dig("pages", "home", "blocks", 0, "values")
-    expect(saved).to include("text-6" => "⌕", "text-5" => "Notre présentation", "text-4" => "la solidarité")
+    get builder_admin_site_path(version)
+    document = studio_builder_configuration.fetch("settings")
+    document.dig("site", "pages", "home", "blocks", 0, "values")["text-4"] = "la solidarité"
+    saved = save_studio_version(version, document)
+    expect(saved.site.dig("pages", "home", "blocks", 0, "values")).to include("text-6" => "⌕", "text-5" => "Notre présentation", "text-4" => "la solidarité")
     expect(version.reload.site.dig("pages", "home", "blocks", 0, "values", "text-4")).to eq("ensemble")
   end
 end

@@ -3,8 +3,6 @@ import DisclosureController from "./disclosure_controller"
 import DialogController from "./dialog_controller"
 application.register("disclosure", DisclosureController)
 application.register("dialog", DialogController)
-import VisualStudioController from "./visual_studio_controller"
-application.register("visual-studio", VisualStudioController)
 import QuestPreviewController from "./quest_preview_controller"
 application.register("quest-preview", QuestPreviewController)
 import CatalogueController from "./catalogue_controller"
@@ -30,9 +28,6 @@ application.register("back-to-top", BackToTopController)
 import DirectoryDisplayController from "./directory_display_controller"
 application.register("directory-display", DirectoryDisplayController)
 
-import OrganizationRequestController from "./organization_request_controller"
-application.register("organization-request", OrganizationRequestController)
-
 import NotificationReadController from "./notification_read_controller"
 application.register("notification-read", NotificationReadController)
 
@@ -42,5 +37,11 @@ application.register("workspace-tabs", WorkspaceTabsController)
 import MissionFormController from "./mission_form_controller"
 application.register("mission-form", MissionFormController)
 
+import PasswordVisibilityController from "./password_visibility_controller"
+application.register("password-visibility", PasswordVisibilityController)
+
 import DashboardActivityController from "./dashboard_activity_controller"
 application.register("dashboard-activity", DashboardActivityController)
+
+import StudioReviewController from "./studio_review_controller"
+application.register("studio-review", StudioReviewController)

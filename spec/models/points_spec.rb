@@ -5,22 +5,21 @@ RSpec.describe "Registre Points Services", :"F-040", :"F-041", :"F-042", :"F-043
   let(:admin) { create(:user, :super_admin) }
   before { point_rules }
 
-  it "inscrit deux écritures équilibrées et empêche toute modification directe du registre ou des soldes" do
+  it "inscrit deux écritures équilibrées et protège le registre et les soldes avec les modèles Rails" do
     operation = fund_points(user, 30)
     expect(operation.point_entries.sum(:amount)).to eq(0)
     expect(PointAccount.for!(user).balance).to eq(30)
     expect(PointAccount.sum(:balance)).to eq(0)
     [ operation, operation.point_entries.first ].each do |record|
       expect { record.destroy! }.to raise_error(record.is_a?(PointOperation) ? ActiveRecord::DeleteRestrictionError : ActiveRecord::ReadOnlyRecord)
-      expect { record.class.where(id: record.id).delete_all }.to raise_error(ActiveRecord::StatementInvalid)
-      expect { record.class.where(id: record.id).update_all(created_at: 1.day.ago) }.to raise_error(ActiveRecord::StatementInvalid)
+      expect { record.update!(created_at: 1.day.ago) }.to raise_error(record.is_a?(PointOperation) ? ActiveRecord::RecordInvalid : ActiveRecord::ReadOnlyRecord)
     end
-    expect { PointAccount.for!(user).update!(balance: 900) }.to raise_error(ActiveRecord::StatementInvalid)
-    expect { PointAccount.create!(user: create(:user), balance: 10) }.to raise_error(ActiveRecord::StatementInvalid)
-    expect { operation.point_entries.create!(point_account: PointAccount.for!(create(:user)), amount: 1, balance_after: 1) }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { PointAccount.for!(user).update!(balance: 900) }.to raise_error(ActiveRecord::RecordInvalid)
+    expect { PointAccount.create!(user: create(:user), balance: 10) }.to raise_error(ActiveRecord::RecordInvalid)
+    expect { operation.point_entries.create!(point_account: PointAccount.for!(create(:user)), amount: 1, balance_after: 1) }.to raise_error(ActiveRecord::RecordInvalid)
     pending = PointOperation.create!(kind: "admin_adjustment", source: user, reason: "Test", idempotency_key: "pending")
-    expect { pending.update!(status: "committed", committed_at: Time.current) }.to raise_error(ActiveRecord::StatementInvalid, /unbalanced/)
-    expect { PointOperation.create!(kind: "admin_adjustment", source: user, reason: "Test", idempotency_key: "bad", status: "committed") }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { pending.update!(status: "committed", committed_at: Time.current) }.to raise_error(ActiveRecord::RecordInvalid, /équilibrées/)
+    expect { PointOperation.create!(kind: "admin_adjustment", source: user, reason: "Test", idempotency_key: "bad", status: "committed") }.to raise_error(ActiveRecord::RecordInvalid)
   end
 
   it "rejoue la même opération sans double crédit et refuse les collisions de sens ou de montant" do
@@ -225,8 +224,8 @@ RSpec.describe "Registre Points Services", :"F-040", :"F-041", :"F-042", :"F-043
     expect(PointRuleVersion.current("engagement")).to eq(draft)
     expect(original.reload.point_entries.where(amount: 1..).sum(:amount)).to eq(30)
     expect { draft.update!(name: "Autre") }.to raise_error(ActiveRecord::ReadOnlyRecord)
-    expect { PointRuleVersion.where(id: draft.id).update_all(name: "Autre") }.to raise_error(ActiveRecord::StatementInvalid)
-    expect { PointRuleVersion.where(id: draft.id).delete_all }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { draft.update!(name: "Autre") }.to raise_error(ActiveRecord::ReadOnlyRecord)
+    expect { draft.destroy! }.to raise_error(ActiveRecord::ReadOnlyRecord)
     expect { Points::Rules.rollback!(draft, actor: user, reason: "Test") }.to raise_error(Pundit::NotAuthorizedError)
     rollback = Points::Rules.rollback!(original.point_rule_version, actor: admin, reason: "Retour au barème initial")
     travel 2.minutes
@@ -282,11 +281,11 @@ RSpec.describe "Registre Points Services", :"F-040", :"F-041", :"F-042", :"F-043
 
   it "protège les aperçus et preuves contre les changements après validation" do
     adjustment = Points::Adjustments.preview!(user: user, actor: admin, amount: 1, reason: "Test")
-    expect { adjustment.update!(amount: 1000) }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { adjustment.update!(amount: 1000) }.to raise_error(ActiveRecord::RecordInvalid)
     claim = Points::Rewards.submit!(user: user, kind: "video", evidence: "Référence du témoignage filmé")
-    expect { claim.update!(amount: 1000) }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { claim.update!(amount: 1000) }.to raise_error(ActiveRecord::RecordInvalid)
     Points::Rewards.review!(claim.reload, actor: admin, decision: "approved", reason: "Vérifié")
-    expect { claim.update!(status: "pending") }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { claim.update!(status: "pending") }.to raise_error(ActiveRecord::ReadOnlyRecord)
   end
 
   it "applique aussi le plafond chaîne à des preuves de mois anciens validées ensemble" do

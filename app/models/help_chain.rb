@@ -1,4 +1,6 @@
 class HelpChain < ApplicationRecord
+  include ImmutableInputs
+  immutable_inputs :chain_rule_version_id, :point_rule_version_id, :creator_id
   belongs_to :creator, class_name: "User"
   belongs_to :chain_rule_version
   belongs_to :point_rule_version

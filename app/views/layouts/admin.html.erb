@@ -8,7 +8,7 @@
     </aside>
     <main class="workspace admin-workspace <%= 'admin-editor-workspace' if %w[admin/site admin/studio admin/visual_studio].include?(controller_path) %>" id="main-content" tabindex="-1">
       <div class="admin-workspace-bar"><div><span>Espace équipe</span><span aria-hidden="true">/</span><strong><%= admin_current_section %></strong></div><%= link_to root_path, class: "admin-return-site" do %>Voir le site <%= admin_ui_icon("arrow") %><% end %></div>
-      <%= yield %>
+      <% if @disabled_feature %><p class="feature-disabled-banner"><strong><%= AppFeatures.definition(@disabled_feature)[:label] %> désactivé</strong> · Consultation des données conservées. <%= link_to "Gérer les fonctionnalités", admin_features_path %></p><%= app_feature_readonly(capture { yield }) %><% else %><%= yield %><% end %>
     </main>
   </div>
 <% end %>

@@ -66,6 +66,56 @@ RSpec.describe "Modération quotidienne", type: :request do
     expect(response).to have_http_status(:forbidden)
   end
 
+  it "permet au super-admin de voir les coordonnées, gérer les points et promouvoir un membre" do
+    super_admin = create(:user, :super_admin)
+    member = create(:profile, phone: "0612345678").user
+    login super_admin
+    get admin_user_path(member)
+    expect(response.body).to include(member.email, "0612345678", "0", "Points Services")
+    patch admin_user_path(member), params: { operation: "point_preview", amount: 25, reason: "Correction validée" }
+    expect(response).to have_http_status(:see_other)
+    adjustment = PointAdjustment.last
+    patch admin_user_path(member), params: { operation: "point_commit", adjustment_id: adjustment.id }
+    expect(PointAccount.for!(member).balance).to eq(25)
+    patch admin_user_path(member), params: { operation: "promote_admin", reason: "Renfort de l’équipe" }
+    expect(response).to have_http_status(:see_other)
+    expect(member.reload).to be_admin
+    expect(AuditLog.where(target: member, action: "user.promoted_admin")).to exist
+  end
+
+  it "réunit les coordonnées, les points, la promotion et l’exclusion dans la liste des membres" do
+    super_admin = create(:user, :super_admin)
+    member = create(:profile, display_name: "Membre Liste", phone: "0611223344").user
+    member_to_promote = create(:user)
+    login super_admin
+
+    get admin_users_path(q: "Membre Liste")
+    expect(response.body).to include(member.email, "0611223344", "Points Services", "Passer en administrateur", "Exclure le membre")
+
+    patch admin_user_path(member), params: { operation: "point_preview", amount: 15, reason: "Correction depuis la liste", return_to: "members" }
+    expect(response).to redirect_to(admin_users_path(anchor: "member-#{member.id}"))
+    adjustment = PointAdjustment.last
+    patch admin_user_path(member), params: { operation: "point_commit", adjustment_id: adjustment.id, return_to: "members" }
+    expect(PointAccount.for!(member).balance).to eq(15)
+
+    patch admin_user_path(member), params: { status: "suspended", reason: "Exclusion depuis la liste", return_to: "members" }
+    expect(member.reload).to be_suspended
+    patch admin_user_path(member_to_promote), params: { operation: "promote_admin", reason: "Renfort depuis la liste", return_to: "members" }
+    expect(member_to_promote.reload).to be_admin
+  end
+
+  it "affiche le journal d’audit dans la vue d’ensemble sans entrée séparée dans la sidebar" do
+    super_admin = create(:user, :super_admin)
+    member = create(:user)
+    AuditLog.create!(actor: super_admin, target: member, action: "user.promoted_admin", reason: "Test de traçabilité")
+    login super_admin
+
+    get admin_root_path
+    expect(response.body).to include("Journal d’audit", "Test de traçabilité")
+    navigation = Nokogiri::HTML(response.body).at_css(".desktop-workspace-navigation").text
+    expect(navigation).not_to include("Journal d’audit")
+  end
+
   it "ne révèle pas les avis différés et journalise la modération des avis révélés" do
     allow_permission("users.read")
     allow_permission("reports.manage")
@@ -99,8 +149,10 @@ RSpec.describe "Modération quotidienne", type: :request do
     delete destroy_user_session_path
     login create(:user, :super_admin)
     get admin_operations_path(resource: "user")
-    expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Explorer les registres", "Opérations sensibles")
+    expect(response).to redirect_to(admin_root_path(tab: "activity"))
+    follow_redirect!
+    expect(response.body).to include("Accès des membres", "Adresse e-mail à bloquer")
+    expect(response.body).not_to include("Explorer les registres", "Opérations sensibles")
     expect(response.body).not_to include(admin.email)
   end
   it "affiche le score publié et masque les projections retirées ainsi que les preuves privées" do

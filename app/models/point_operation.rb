@@ -1,4 +1,6 @@
 class PointOperation < ApplicationRecord
+  include ImmutableInputs
+  immutable_inputs :kind, :idempotency_key, :reason, :source_type, :source_id, :initiator_id, :point_rule_version_id, :reversed_operation_id, :created_at
   KINDS = %w[welcome_reward service_transfer achievement_reward chain_reward referral_reward cycle_reward admin_adjustment reversal].freeze
   belongs_to :initiator, class_name: "User", optional: true
   belongs_to :source, polymorphic: true
@@ -10,6 +12,19 @@ class PointOperation < ApplicationRecord
   validates :kind, inclusion: { in: KINDS }
   validates :reason, presence: true, length: { maximum: 500 }
   validates :reversed_operation, presence: true, if: -> { kind == "reversal" }
+  validates :status, inclusion: { in: %w[pending committed] }
+  validate :valid_commit
+  before_destroy { raise ActiveRecord::ReadOnlyRecord, "Une opération du portefeuille ne peut pas être supprimée" }
   scope :committed, -> { where(status: "committed") }
   def readonly? = persisted? && status_in_database == "committed"
+
+  private
+
+  def valid_commit
+    if new_record?
+      errors.add(:status, "doit commencer en attente") unless status == "pending"
+    elsif status != "committed" || committed_at.blank? || point_entries.count != 2 || point_entries.sum(:amount) != 0
+      errors.add(:base, "L’opération doit contenir deux écritures équilibrées avant validation")
+    end
+  end
 end

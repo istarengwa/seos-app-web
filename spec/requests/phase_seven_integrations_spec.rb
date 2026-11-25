@@ -41,19 +41,23 @@ RSpec.describe "Intégrations et pièces de la phase 7", type: :request do
   end
   it "nettoie une image, la réserve au brouillon puis la retire au reset" do
     login admin
-    post admin_studio_index_path, params: { operation: "upload", image: Rack::Test::UploadedFile.new(Rails.root.join("app/assets/images/seos-logo.png"), "image/png") }
-    expect(response).to have_http_status(:see_other)
-    asset = StudioAsset.last
+    asset = StudioAsset.create!(author: admin)
+    SafeImage.attach!(asset.image, Rack::Test::UploadedFile.new(Rails.root.join("app/assets/images/seos-logo.png"), "image/png"))
     expect(asset.image.blob.content_type).to eq("image/jpeg")
     get media_path(asset.image.attachment)
     expect(response).to have_http_status(:ok)
     delete destroy_user_session_path
     get media_path(asset.image.attachment)
     expect(response).to have_http_status(:not_found)
-    version = Studio.change!(actor: admin, name: "Image", settings: { "pages" => { "home" => { "image" => "asset:#{asset.id}", "alt" => "Une image de recette", "separator" => "wave_single", "animated" => true } } })
+    home = SiteDesign.home_page
+    home["blocks"].first["values"].merge!("image-0" => "asset:#{asset.id}", "alt-0" => "Une image de recette")
+    login admin
+    source = Studio.change!(actor: admin, name: "Source image", settings: {})
+    version = save_studio_version(source, { "site" => { "pages" => { "home" => home } } })
+    delete destroy_user_session_path
     %w[validate publish].each { |action| Studio.transition!(version: version, actor: admin, action: action, reason: "Recette") }
     get root_path
-    expect(response.body).to include("Une image de recette", "studio-motion")
+    expect(response.body).to include("Une image de recette")
     get media_path(asset.image.attachment)
     expect(response).to have_http_status(:ok)
     reset = Studio.change!(actor: admin, name: "Défaut", settings: {}, source: version, reset: "site")

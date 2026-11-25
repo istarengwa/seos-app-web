@@ -4,19 +4,20 @@ class Referrals
   end
 
   def self.eligible?(user)
-    user.active? && user.confirmed? &&
-      ((user.created_at <= ReferralSetting.minimum_age_days.days.ago) || ReferralExemption.where(user: user).where("expires_at > ?", Time.current).exists?)
+    AppFeatures.enabled?("referrals") && user.active? && user.confirmed?
   end
 
   def self.link_for!(user)
+    AppFeatures.require!("referrals")
     user.with_lock do
-      raise Exchanges::Invalid, "Votre compte doit être actif, confirmé et avoir #{ReferralSetting.minimum_age_days} jours d’ancienneté, sauf exemption administrative." unless eligible?(user)
+      raise Exchanges::Invalid, "Votre compte doit être actif et votre e-mail confirmé." unless eligible?(user)
       ReferralLink.find_by(owner: user) || ReferralLink.create!(owner: user)
     end
   end
 
   # Capturé à l’inscription, conservé en base jusqu’à la confirmation de l’e-mail.
   def self.register_link!(user, link_id)
+    return unless AppFeatures.enabled?("referrals")
     link = ReferralLink.find_by(id: link_id)
     return unless link && link.owner_id != user.id && eligible?(link.owner)
     user.with_lock do
@@ -27,6 +28,7 @@ class Referrals
   end
 
   def self.activate_pending!(user)
+    return unless AppFeatures.enabled?("referrals")
     user.with_lock do
       link = ReferralLink.find_by(id: user.pending_referral_link_id)
       return unless link && user.active? && user.confirmed? && link.owner_id != user.id && eligible?(link.owner)
@@ -40,6 +42,7 @@ class Referrals
   end
 
   def self.issue!(user)
+    AppFeatures.require!("referrals")
     user.with_lock do
       raise Exchanges::Invalid, "Le compte ne remplit pas les conditions actuelles de parrainage." unless eligible?(user)
       codes = ReferralCode.where(owner: user)
@@ -51,6 +54,7 @@ class Referrals
   end
 
   def self.claim!(user, raw_codes)
+    AppFeatures.require!("referrals")
     user.with_lock do
       raise Exchanges::Invalid, "Les codes sont acceptés pendant les sept premiers jours du compte." unless user.active? && user.confirmed? && user.created_at > 7.days.ago
       raise Exchanges::Invalid, "Votre parrain est déjà rattaché à votre inscription." if Referral.where(referred_user: user).where.not(referral_link_id: nil).exists?
@@ -70,6 +74,7 @@ class Referrals
   end
 
   def self.primary!(user, referral)
+    AppFeatures.require!("referrals")
     user.with_lock do
       raise Pundit::NotAuthorizedError unless referral.referred_user_id == user.id
       raise Exchanges::Invalid, "Le choix du parrain principal est limité aux sept premiers jours et aux soutiens valides." unless user.created_at > 7.days.ago && Referral.valid_support.exists?(id: referral.id)
@@ -79,6 +84,7 @@ class Referrals
   end
 
   def self.object!(user, referral, reason)
+    AppFeatures.require!("referrals")
     referral.with_lock do
       raise Pundit::NotAuthorizedError unless referral.referrer_id == user.id
       raise Exchanges::Invalid, "Le délai d’objection de 72 heures est dépassé." unless referral.status == "provisional" && referral.objection_deadline_at > Time.current
@@ -93,13 +99,14 @@ class Referrals
   end
 
   def self.mature!
+    return unless AppFeatures.enabled?("referrals")
     Referral.valid_support.find_each do |referral|
       referral.with_lock do
         next unless %w[provisional confirmed].include?(referral.status)
         referral.update!(status: "confirmed", confirmed_at: Time.current) if referral.status == "provisional" && referral.objection_deadline_at <= Time.current
         user = referral.referred_user
         sponsors = Referral.where(referred_user: user).pluck(:referrer_id)
-        if referral.status == "confirmed" && referral.primary_referrer? && referral.qualified_at.nil? && user.active? && user.confirmed? && user.created_at <= 30.days.ago && (partners(user) - sponsors).size >= 2
+        if referral.status == "confirmed" && referral.primary_referrer? && referral.qualified_at.nil? && user.active? && user.confirmed? && (partners(user) - sponsors).size >= 2
           referral.update!(qualified_at: Time.current)
           # Eligibility only; the points job rechecks it and credits the sponsor's lifetime quest.
           Notification.notify!(user: referral.referrer, key: "referral:#{referral.id}:qualified", title: "Parrainage qualifié. La récompense est examinée par le registre Points Services.")

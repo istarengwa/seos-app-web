@@ -1,6 +1,6 @@
 class VolunteerMissionsController < ApplicationController
   before_action do
-    @indexable = CrawlerPolicy.current&.search_enabled != false
+    @indexable = true
     @canonical = request.base_url + request.path
   end
   before_action { raise ActiveRecord::RecordNotFound unless FeatureFlag.voyage_enabled? }

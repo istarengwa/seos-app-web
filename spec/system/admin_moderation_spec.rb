@@ -21,11 +21,11 @@ RSpec.describe "Espace de modération et supervision", type: :system do
         expect(page).to be_axe_clean.according_to(:wcag2a, :wcag2aa)
         page.save_screenshot(Rails.root.join("tmp/screenshots/admin-moderation-#{index}-#{width}.png"))
       end
-      click_button "Explorer les registres"
-      expect(page).to have_select("Registre")
-      expect(page).not_to have_button("Bloquer cette adresse")
-      click_button "Opérations sensibles"
-      expect(page).to have_button("Bloquer cette adresse")
+      click_link "Outils de gestion"
+      expect(page).to have_link("Gérer les annonces")
+      expect(page).not_to have_button("Bloquer cet e-mail")
+      click_link "Accès des membres"
+      expect(page).to have_button("Bloquer cet e-mail")
       expect(page).not_to have_select("Registre")
       page.driver.browser.action.pause(duration: 0.3).perform
       expect(page).to be_axe_clean.according_to(:wcag2a, :wcag2aa)

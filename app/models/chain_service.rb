@@ -6,6 +6,8 @@ class ChainService < ApplicationRecord
   encrypts :description
   validates :description, presence: true, length: { maximum: 1500 }
   validates :status, inclusion: { in: %w[invited confirmed expired cancelled] }
+  before_destroy { raise ActiveRecord::ReadOnlyRecord, "Un maillon de chaîne ne peut pas être supprimé" }
+  def readonly? = persisted? && status_in_database == "confirmed"
   def self.digest(token) = Digest::SHA256.hexdigest(token.to_s)
   def available? = status == "invited" && invitation_expires_at > Time.current && help_chain.status == "active"
 end

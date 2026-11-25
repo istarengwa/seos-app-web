@@ -3,6 +3,7 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
   before_action :reject_deleted_site_page
   before_action :verify_login_session
+  include FeatureAccess
   before_action :private_response, if: :devise_controller?
   helper_method :current_login_session
   rescue_from Pundit::NotAuthorizedError, with: :forbidden

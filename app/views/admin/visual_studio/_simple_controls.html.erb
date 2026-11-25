@@ -1,0 +1,24 @@
+<div class="studio-simple-controls">
+  <fieldset><legend>Couleurs</legend><div class="studio-control-row"><label>Texte<input type="color" data-simple-style="color"></label><label>Fond<input type="color" data-simple-style="background-color"></label></div></fieldset>
+  <fieldset><legend>Typographie</legend>
+    <label>Police<select data-simple-style="font-family"><option value="">Police actuelle</option><option value="DM Sans, sans-serif">Texte SEOS</option><option value="Playfair Display, serif">Titres SEOS</option><option value="system-ui, sans-serif">Police de l’appareil</option></select></label>
+    <label>Taille du texte<select data-simple-style="font-size"><option value="">Taille actuelle</option><option value="14px">Petit</option><option value="18px">Normal</option><option value="28px">Grand</option><option value="48px">Très grand</option><option value="72px">Titre principal</option></select></label>
+    <label>Épaisseur<select data-simple-style="font-weight"><option value="">Épaisseur actuelle</option><option value="400">Normal</option><option value="600">Mis en valeur</option><option value="800">Gras</option></select></label>
+    <label>Alignement<select data-simple-style="text-align"><option value="left">À gauche</option><option value="center">Centré</option><option value="right">À droite</option><option value="justify">Justifié</option></select></label>
+  </fieldset>
+  <fieldset><legend>Dimensions et espaces</legend>
+    <label>Largeur<select data-simple-style="width"><option value="">Largeur actuelle</option><option value="auto">Automatique</option><option value="100%">Toute la largeur</option><option value="50%">La moitié</option><option value="33.333%">Un tiers</option></select></label>
+    <label>Espace intérieur <output></output><input type="range" min="0" max="160" data-simple-style="padding"></label>
+    <label>Arrondi des coins <output></output><input type="range" min="0" max="120" data-simple-style="border-radius"></label>
+    <label>Visibilité <output></output><input type="range" min="0" max="100" data-simple-style="opacity"></label>
+  </fieldset>
+  <fieldset><legend>Retourner l’élément</legend><div class="studio-control-row"><button type="button" data-studio-flip="x" aria-pressed="false">Miroir horizontal</button><button type="button" data-studio-flip="y" aria-pressed="false">Miroir vertical</button></div></fieldset>
+</div>
+<div class="studio-v2-wave-controls" data-wave-controls hidden>
+  <strong>Vague de séparation</strong>
+  <label>Direction<select data-wave-direction><option value="up">Vers le haut</option><option value="down">Vers le bas</option><option value="left">Vers la gauche</option><option value="right">Vers la droite</option></select></label>
+  <label>Couleur de la vague<input type="color" data-wave-color value="#cdae4f"></label>
+  <% { "roundness" => ["Courbure", 0, 100, 55], "depth" => ["Profondeur", 10, 110, 65], "height" => ["Hauteur", 40, 240, 100], "angle" => ["Inclinaison", -15, 15, 0] }.each do |key, (label, min, max, value)| %>
+    <label><%= label %> <output data-wave-output="<%= key %>"></output><input type="range" min="<%= min %>" max="<%= max %>" value="<%= value %>" data-wave-control="<%= key %>"></label>
+  <% end %>
+</div>

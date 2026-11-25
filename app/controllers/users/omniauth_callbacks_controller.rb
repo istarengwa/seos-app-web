@@ -2,6 +2,7 @@ module Users
   class OmniauthCallbacksController < Devise::OmniauthCallbacksController
     before_action :private_response
     def google_oauth2
+      raise ActiveRecord::RecordNotFound unless AppFeatures.enabled?("google_login")
       raise ActiveRecord::RecordNotFound unless GoogleIdentity.enabled? || Rails.env.test?
       if current_user
         return require_recent_authentication unless current_login_session&.recently_authenticated?

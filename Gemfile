@@ -4,8 +4,9 @@ source "https://rubygems.org"
 gem "rails", "~> 8.1.3"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
-# Use sqlite3 as the database for Active Record
+# SQLite locally; PostgreSQL for production.
 gem "sqlite3", ">= 2.1"
+gem "pg", "~> 1.6", group: :production
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Bundle and transpile JavaScript [https://github.com/rails/jsbundling-rails]
@@ -78,8 +79,6 @@ group :test do
 end
 
 gem "geocoder", "~> 1.8"
-
-gem "stripe", "~> 19.6"
 
 gem "omniauth-google-oauth2", "~> 1.2"
 gem "omniauth-rails_csrf_protection", "~> 2.0"

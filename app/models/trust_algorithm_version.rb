@@ -1,4 +1,6 @@
 class TrustAlgorithmVersion < ApplicationRecord
+  include ImmutableInputs
+  immutable_inputs :created_by_id
   DEFAULT_CONFIGURATION = {
     "prior" => 2.0, "referral_weight" => 0.25, "half_life_days" => 548.0,
     "pair_cap" => 2.5, "author_cap" => 0.15, "category_cap" => 0.6,

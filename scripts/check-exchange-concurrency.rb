@@ -39,7 +39,6 @@ raise "Duplicate message or notification" unless Message.count == 1 && Notificat
 puts "SQLite concurrence : demande unique, deux confirmations conservées, message et notification uniques."
 
 admin = User.create!(email: "admin@concurrency.test", password: "DisposableTestPassword!42", role: :super_admin, confirmed_at: Time.current, status: :active)
-ReferralExemption.create!(user: admin, granted_by: admin, reason: "Fixture de concurrence", expires_at: 1.day.from_now)
 raw = Referrals.issue!(admin)
 claims = simultaneously(provider, requester) do |actor|
   Referrals.claim!(User.find(actor.id), raw)
@@ -51,7 +50,6 @@ raise "Referral code claimed twice" unless claims.sort == [ :claimed, :rejected 
 claimant = Referral.first.referred_user
 10.times do |index|
   sponsor = User.create!(email: "sponsor#{index}@concurrency.test", password: "DisposableTestPassword!42", confirmed_at: Time.current, status: :active)
-  ReferralExemption.create!(user: sponsor, granted_by: admin, reason: "Fixture de concurrence", expires_at: 1.day.from_now)
   token = Referrals.issue!(sponsor)
   if index < 8
     Referrals.claim!(claimant, token)
@@ -71,6 +69,13 @@ TrustAlgorithmVersion.create!(version: "concurrency", status: "active", configur
 simultaneously(claimant, claimant) { |actor| TrustRecalculationJob.perform_now(actor.id) }
 raise "Duplicate trust snapshot" unless TrustScoreSnapshot.where(user: claimant).count == 1
 puts "SQLite concurrence : code à usage unique, dix soutiens maximum, un principal, snapshot idempotent."
+
+links = simultaneously(admin, admin) { |actor| Referrals.link_for!(User.find(actor.id)) }
+raise "Duplicate permanent referral link" unless links.map(&:id).uniq.size == 1
+signup = User.create!(email: "link-signup@concurrency.test", password: "DisposableTestPassword!42", confirmed_at: Time.current, status: :active)
+simultaneously(signup, signup) { |actor| Referrals.register_link!(User.find(actor.id), links.first.id) }
+raise "Duplicate signup sponsorship" unless Referral.where(referred_user: signup, referral_link: links.first).count == 1
+puts "SQLite parrainage actuel : lien permanent unique et rattachement à l’inscription idempotent."
 
 funding = Points::Ledger.post!(debit: PointAccount.system!, credit: PointAccount.for!(requester), amount: 30, key: "points-funding", kind: "admin_adjustment", source: requester, reason: "Provision de test")
 attempts = simultaneously(provider, admin) do |recipient|

@@ -1,0 +1,21 @@
+.studio-review-body { margin: 0; background: #e8eff0; overflow: hidden; }
+.studio-review { display: flex; flex-direction: column; height: 100dvh; }
+.studio-review-bar { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; padding: 12px 20px; background: #fff; color: #173947; border-bottom: 1px solid #c6d7da; box-shadow: 0 2px 12px #073e5010; z-index: 1; }
+.studio-review-bar .btn { font-size: .8rem; white-space: nowrap; }
+.studio-review-bar form { margin: 0; }
+.studio-review-page { display: grid; gap: 3px; font-size: .72rem; }
+.studio-review-page select { max-width: 240px; min-height: 38px; border: 1px solid #aac5cc; border-radius: 8px; background: white; color: #173947; padding: 6px 10px; }
+.studio-review-sizes { flex: 1; min-width: 240px; max-width: 500px; margin-inline: auto; }
+.studio-review-sizes .actions { gap: 5px; }
+.studio-review-sizes button { min-height: 44px; padding: 5px 10px; border: 1px solid #c6d7da; border-radius: 7px; color: #174858; background: #f4f8f8; font-size: .72rem; }
+.studio-review-sizes label { display: flex; gap: 8px; align-items: center; font-size: .72rem; margin-top: 6px; }
+.studio-review-sizes output { min-width: 55px; font-variant-numeric: tabular-nums; }
+.studio-review-sizes input { flex: 1; min-width: 60px; accent-color: #087b91; }
+.studio-review-stage { flex: 1; min-height: 0; overflow: auto; text-align: center; }
+.studio-review-stage iframe { display: block; height: 100%; min-height: 300px; width: 100%; margin-inline: auto; border: 0; background: white; box-shadow: 0 0 22px #073e5014; }
+.studio-review-errors { padding: 12px 20px; background: #fff0ed; color: #8e3427; }
+.studio-review-errors p { margin: 0; }
+@media(max-width:700px) { .studio-review-bar { gap: 8px; padding: 8px; } .studio-review-sizes { order: 3; max-width: none; width: 100%; } .studio-review-page select { max-width: 160px; } }
+.studio-review-changes { position: relative; font-size: .75rem; }
+.studio-review-changes summary { min-height: 36px; padding: 8px; cursor: pointer; }
+.studio-review-changes ul { position: absolute; z-index: 2; right: 0; width: 320px; max-height: 50vh; overflow: auto; margin: 0; padding: 20px 30px; border: 1px solid #c6d7da; border-radius: 10px; background: white; box-shadow: 0 8px 24px #073e5020; }

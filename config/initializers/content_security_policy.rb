@@ -12,6 +12,8 @@ Rails.application.configure do
     policy.form_action :self
     policy.frame_ancestors :none
   end
-  config.content_security_policy_nonce_generator = ->(_request) { SecureRandom.base64(16) }
+  # Turbo keeps the document CSP across visits: inline styles need the same
+  # nonce until the session ends, without a second GET consuming flash messages.
+  config.content_security_policy_nonce_generator = ->(request) { request.session[:csp_nonce] ||= SecureRandom.base64(16) }
   config.content_security_policy_nonce_directives = %w[script-src style-src]
 end

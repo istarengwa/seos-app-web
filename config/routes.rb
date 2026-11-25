@@ -7,7 +7,7 @@ Rails.application.routes.draw do
   resource :privacy_preferences, path: "preferences-confidentialite", only: [ :show, :create ]
   resources :associations, param: :slug, only: [ :index, :show ]
   resources :volunteer_missions, path: "voyage-solidaire", param: :slug, only: [ :index, :show ]
-  resources :partnerships, path: "partenaires", param: :slug, only: [ :index, :show ]
+  resource :partnership_page, path: "partenaires", controller: "partnerships", only: :show
   get "organisations/invitation", to: "organization_invitations#show", as: :organization_invitation
   post "organisations/invitation", to: "organization_invitations#create"
   get "points-services", to: "points#show", as: :points_explanation
@@ -17,7 +17,6 @@ Rails.application.routes.draw do
   get "temoignages", to: "testimonials#index", as: :testimonials
   get "chaines/invitation", to: "chain_invitations#show", as: :chain_invitation
   post "chaines/invitation", to: "chain_invitations#create"
-  post "stripe/webhook", to: "payment_webhooks#create"
 
   resources :listings, path: "annonces", param: :slug, only: [ :index, :show ]
   get "membres/:public_slug", to: "profiles#show", as: :profile
@@ -51,9 +50,6 @@ Rails.application.routes.draw do
     resource :testimonials, path: "temoignages", controller: "testimonials", only: [ :show, :create ]
     resource :community, path: "engagement", controller: "community", only: [ :show, :create ]
     resources :chains, path: "chaines", only: [ :index, :show, :create, :update ]
-    constraints ->(_request) { FeatureFlag.support_enabled? } do
-      resource :support, path: "soutien", controller: "support", only: [ :show, :create ]
-    end
     resource :points, path: "points", only: [ :show, :create ]
     resource :trust, path: "confiance", controller: "trust", only: [ :show, :create ]
     root "dashboard#show"
@@ -81,30 +77,31 @@ Rails.application.routes.draw do
     resource :reauthentication, path: "verification", only: [ :new, :create ]
   end
   namespace :admin do
+    resources :features, path: "fonctionnalites", only: [ :index, :create ]
     resources :operations, only: [ :index, :create ] do
       match :user, via: [ :get, :post ], on: :member
     end
-    resources :site, only: [ :index, :create, :edit, :update ] do
-      get :visual, on: :member, to: "visual_studio#show"
-      post :visual_preview, on: :member, to: "visual_studio#preview"
-      post :visual_save, on: :member, to: "visual_studio#save"
-      get :kit, on: :member
-      get :new_page, on: :collection
+    resources :site, only: [ :index ] do
+      get :visual, on: :member, to: "visual_studio#legacy"
+      post :builder_preview, on: :member, to: "visual_studio#preview"
+      get :builder, on: :member, to: "visual_studio#builder"
+      post :builder_save, on: :member, to: "visual_studio#builder_save"
       get :review, on: :member
       post :publish, on: :member
     end
-    resources :studio, only: [ :index, :create ] do
+    resource :partnership_page, path: "partenaires", only: [ :edit, :update ]
+    resources :partners, path: "partenaires/entrees", only: [ :create, :update, :destroy ]
+    resources :studio, only: [] do
       get :preview, on: :member
     end
     resources :privacy, path: "confidentialite", only: [ :index, :create ]
     resources :network, path: "organisations", only: [ :index, :show, :create ]
     resources :community, path: "engagement", only: [ :index, :create ]
-    resources :financial_support, path: "soutien", only: [ :index, :create ]
     resources :points, path: "points", only: [ :index, :create ]
     resources :trust, path: "confiance", only: [ :index, :create ] do
       get :risks, on: :collection
     end
-    resources :workbench, path: "gestion/:kind", only: [ :index, :new, :create, :show, :update ] do
+    resources :workbench, path: "gestion/:kind", only: [ :index, :new, :create, :show, :update, :destroy ] do
       post :reveal, on: :member
     end
     root "dashboard#show"
@@ -112,7 +109,6 @@ Rails.application.routes.draw do
     resources :audit_logs, path: "audit", only: :index
   end
   namespace :super_admin do
-    resource :map_setting, path: "carte", only: [ :edit, :update ]
     root "dashboard#show"
     resources :administrators, path: "administrateurs", only: [ :index, :update ] do
       resources :permission_grants, path: "permissions", only: [ :create, :destroy ]

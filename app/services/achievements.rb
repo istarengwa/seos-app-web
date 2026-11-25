@@ -19,6 +19,8 @@ class Achievements
   end
 
   def self.submit!(user:, achievement:, evidence:, proof: nil)
+    AppFeatures.require!("quests")
+    raise Exchanges::Invalid, "Cette quête dépend d’une fonctionnalité désactivée." unless AppFeatures.quest_available?(achievement)
     Chains.active!(user)
     raise Exchanges::Invalid, "Cette quête n’accepte pas de preuve personnalisée." unless achievement.active? && achievement.event_name == "manual"
     user.with_lock do
@@ -33,6 +35,8 @@ class Achievements
   end
 
   def self.review!(record:, actor:, decision:, reason:)
+    AppFeatures.require!("quests")
+    raise Exchanges::Invalid, "Cette quête dépend d’une fonctionnalité désactivée." unless AppFeatures.quest_available?(record.achievement)
     raise Pundit::NotAuthorizedError unless actor.permission?("community.manage") && actor.id != record.user_id
     raise Exchanges::Invalid, "Décision ou motif invalide." unless %w[approved rejected reexamine].include?(decision) && reason.present? && reason.size <= 500
     record.user.with_lock do

@@ -1,7 +1,6 @@
 <% if (composed_page = site_version&.site&.dig("pages", "home")) %>
 <% content_for :title, composed_page["title"] %><%= render "site/page", page: composed_page, slug: "home" %>
 <% else %>
-<%= render "site/edit_link", slug: "home" %>
 <% studio_page = (@studio_version || StudioVersion.current)&.page("home") || {} %>
 <section class="hero">
   <div class="container">
@@ -34,6 +33,8 @@
     </dialog>
   </div>
 </section>
+
+<% if @featured_chains&.any? %><section class="section featured-chains" id="chaines"><div class="container"><div class="section-heading"><span class="eyebrow">L’entraide en mouvement</span><h2>Des chaînes qui continuent grâce à chacun.</h2><p>Découvrez le parcours complet des services transmis de membre en membre.</p></div><div class="chain-home-grid"><% @featured_chains.each do |chain| %><%= render "shared/chain_timeline", chain: chain %><% end %></div></div></section><% end %>
 
 <%= render "shared/studio_media", fields: studio_page %>
 

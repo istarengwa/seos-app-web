@@ -16,13 +16,19 @@ Le nouveau droit `users.moderate`, à attribuer avec `users.read`, permet la sus
 
 `reports.manage`, avec `users.read`, permet de modérer un avis révélé depuis la fiche de son destinataire : masquer/restaurer le texte ou invalider l’avis pour le calcul du score. Les avis différés restent inaccessibles, y compris par identifiant direct. Le rappel de recalcul existant est conservé ; la mise à jour du score est asynchrone. Restaurer le texte d’un avis invalidé ne rétablit pas sa contribution au score.
 
-## Supervision et registres
+## Vue d’ensemble
 
-Anciennement « Pilotage et registres », cet espace est réservé aux super administrateurs dans le menu et sur toutes ses routes (lecture, export, fiches historiques et mutations). Les anciennes permissions `operations.read` ou `operations.manage` ne suffisent plus à ouvrir cet espace en tant qu’admin ordinaire.
+La page d’accueil de l’administration répartit ses contenus en onglets : **Activité**, **Outils de gestion**, **Accès des membres**, **Demandes de données**, puis **Journal d’audit**. Les accès sont réservés aux super administrateurs, les demandes exigent `privacy.manage` et le journal exige `audit.read`. Les URL conservent l’onglet actif ; les filtres et la pagination du journal restent dans leur onglet. Les anciennes URL de supervision redirigent vers cette page, après contrôle du rôle.
 
-Trois onglets distinguent la vue d’ensemble, les registres et les opérations sensibles. Les indicateurs affichent les comptes membres, les annonces au statut publié, les signalements ouverts et les organisations en attente, avec accès aux outils correspondants. Un registre présente uniquement référence, statut et date, par pages de 20. L’export journalisé contient au maximum les 100 premières références filtrées.
+L’explorateur de registres et ses exports ont été retirés. Les indicateurs utiles sont réunis dans Activité et renvoient aux outils de gestion correspondants.
 
-Les opérations sensibles conservent leurs contrôles : suspension groupée préparée puis confirmée par un autre super administrateur dans les 15 minutes, contrôle de changement des comptes, blocage temporaire et consignes d’indexation. Les prévisualisations expirées et les opérations exécutées sont identifiées. Les registres ne deviennent pas des formulaires de modification directe des données.
+Dans Accès des membres, la suspension groupée accepte de 1 à 20 numéros issus de la liste des membres, séparés par virgules, espaces ou points-virgules, avec ou sans #. La prévisualisation affiche les noms et les numéros. La suspension exige toujours la confirmation d’un autre super administrateur dans les 15 minutes et vérifie que les comptes n’ont pas changé. Le blocage temporaire concerne explicitement une adresse e-mail de connexion, avec date de fin et motif. Des exemples et des indications accompagnent les champs.
+
+Les formulaires de purge manuelle ont été retirés. Les demandes de droits sont dans Vue d’ensemble ; les durées de conservation se modifient dans Studio V2 → Documents légaux → Durées de conservation des données. Elles réutilisent les versions, simulations et validations existantes, avec unités en jours et sans JSON dans l’interface. Leur confirmation exige un autre super administrateur après validation juridique. Les anciennes URL de confidentialité redirigent vers l’outil correspondant. Les entrées de menu « Journal & textes légaux » et « Confidentialité » sont supprimées.
+
+## Indexation publique
+
+Les pages publiques sont ouvertes par défaut aux moteurs de recherche et aux robots d’IA. Les consignes sont définies dans le code de `SeoController`, sans réglage dans l’administration ; les anciennes lignes de `CrawlerPolicy` ne changent plus ce comportement. Les espaces privés restent exclus et les aperçus administratifs restent en `noindex`.
 
 ## Indicateurs du tableau de bord principal
 

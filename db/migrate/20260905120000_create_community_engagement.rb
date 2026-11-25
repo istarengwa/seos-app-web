@@ -14,11 +14,11 @@ class CreateCommunityEngagement < ActiveRecord::Migration[8.1]
       t.timestamps
     end
     create_table :user_achievements do |t|
-      t.references :user, null: false, foreign_key: true
+      t.references :user, null: false, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true
       t.references :achievement, null: false, foreign_key: true
       t.references :point_rule_version, null: false, foreign_key: true
       t.references :point_operation, foreign_key: true
-      t.references :reviewed_by, foreign_key: { to_table: :users }
+      t.references :reviewed_by, foreign_key: { to_table: :users }, foreign_key: { to_table: :users }, foreign_key: { to_table: :users }
       t.string :period_key, null: false
       t.string :status, null: false, default: "submitted"
       t.integer :points, null: false
@@ -30,8 +30,8 @@ class CreateCommunityEngagement < ActiveRecord::Migration[8.1]
     add_index :user_achievements, [ :user_id, :achievement_id, :period_key ], unique: true, name: "unique_achievement_period"
     create_table :top_listing_requests do |t|
       t.references :listing, null: false, foreign_key: true
-      t.references :user, null: false, foreign_key: true
-      t.references :reviewed_by, foreign_key: { to_table: :users }
+      t.references :user, null: false, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true
+      t.references :reviewed_by, foreign_key: { to_table: :users }, foreign_key: { to_table: :users }, foreign_key: { to_table: :users }
       t.string :status, null: false, default: "pending"
       t.text :reason
       t.datetime :starts_at
@@ -42,9 +42,9 @@ class CreateCommunityEngagement < ActiveRecord::Migration[8.1]
     add_index :top_listing_requests, :listing_id, unique: true, where: "status IN ('pending', 'approved')", name: "one_top_listing_request"
     add_column :listings, :urgent_until, :datetime
     create_table :testimonials do |t|
-      t.references :user, null: false, foreign_key: true
+      t.references :user, null: false, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true
       t.references :point_reward_claim, foreign_key: true
-      t.references :reviewed_by, foreign_key: { to_table: :users }
+      t.references :reviewed_by, foreign_key: { to_table: :users }, foreign_key: { to_table: :users }, foreign_key: { to_table: :users }
       t.string :kind, null: false
       t.text :quote, null: false
       t.text :transcript
@@ -99,7 +99,7 @@ class CreateCommunityEngagement < ActiveRecord::Migration[8.1]
     add_index :chain_services, [ :help_chain_id, :position ], unique: true
     add_index :chain_services, :help_chain_id, unique: true, where: "status = 'invited'", name: "one_chain_invitation"
     add_index :chain_services, [ :help_chain_id, :beneficiary_id ], unique: true, where: "status = 'confirmed'", name: "unique_chain_beneficiary"
-    add_check_constraint :chain_services, "provider_id IS NOT beneficiary_id", name: "no_self_chain_validation"
+    add_check_constraint :chain_services, "beneficiary_id IS NULL OR provider_id != beneficiary_id", name: "no_self_chain_validation"
     create_table :chain_rewards do |t|
       t.references :chain_service, null: false, foreign_key: true
       t.references :recipient, null: false, foreign_key: { to_table: :users }
@@ -112,7 +112,7 @@ class CreateCommunityEngagement < ActiveRecord::Migration[8.1]
     add_index :chain_rewards, [ :chain_service_id, :recipient_id ], unique: true
     add_check_constraint :chain_rewards, "points >= 0", name: "nonnegative_chain_reward"
     create_table :financial_contributions do |t|
-      t.references :user, null: false, foreign_key: true
+      t.references :user, null: false, foreign_key: true, foreign_key: true, foreign_key: true, foreign_key: true
       t.string :request_key, null: false
       t.integer :amount_cents, null: false
       t.string :currency, null: false, default: "eur"

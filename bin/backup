@@ -3,6 +3,14 @@ require "bundler/setup"
 require_relative "../lib/seos_backup"
 action = ARGV.shift
 case action
+when "create-production"
+  abort "Arrêtez les écritures puis fournissez SEOS_WRITERS_STOPPED=1" unless ENV["SEOS_WRITERS_STOPPED"] == "1"
+  storage, destination = ARGV
+  abort "Usage: RAILS_ENV=production bin/backup create-production STORAGE DESTINATION" unless destination
+  require_relative "../config/environment"
+  abort "Cette action exige RAILS_ENV=production" unless Rails.env.production?
+  databases = ActiveRecord::Base.configurations.configs_for(env_name: "production").to_h { |config| [ config.name, config.configuration_hash ] }
+  SeosBackup.create_postgresql!(databases: databases, storage: storage, destination: destination)
 when "create"
   abort "Arrêtez les écritures puis fournissez SEOS_WRITERS_STOPPED=1" unless ENV["SEOS_WRITERS_STOPPED"] == "1"
   database, storage, destination = ARGV
@@ -15,6 +23,6 @@ when "restore"
 when "verify"
   abort "Usage: bin/backup verify DIRECTORY" unless ARGV.first
   SeosBackup.verify!(ARGV.first)
-else abort "Actions : create, verify, restore"
+else abort "Actions : create, create-production, verify, restore"
 end
 puts "Sauvegarde vérifiée."

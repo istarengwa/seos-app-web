@@ -1,5 +1,5 @@
-# Demonstration missions for the client presentation, including the production deployment.
-if Rails.env.development? || Rails.env.production?
+# Demonstration missions for the client presentation, only in development.
+if Rails.env.development?
   association = Organization.find_by!(slug: "entraide-solidaire-demo")
   admin = User.find_by!(email: "superadmin@seos.test")
   [

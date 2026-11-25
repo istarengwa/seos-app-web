@@ -1,5 +1,6 @@
 class Community
   def self.request_top!(user:, listing:)
+    AppFeatures.require!("highlights")
     request = TopListingRequest.new(user: user, listing: listing)
     raise Pundit::NotAuthorizedError unless ListingPolicy.new(user, listing).update?
     raise Exchanges::Invalid, "Atteignez le niveau Argent ou faites valider votre partage du mois." unless request.eligible?
@@ -11,6 +12,7 @@ class Community
   end
 
   def self.review_top!(record:, actor:, decision:, reason:, days: 7, position: 1)
+    AppFeatures.require!("highlights")
     raise Pundit::NotAuthorizedError unless actor.permission?("community.manage") && actor.id != record.user_id
     raise Exchanges::Invalid, "Décision invalide." unless %w[approved rejected withdrawn].include?(decision)
     record.with_lock do
@@ -27,6 +29,7 @@ class Community
   end
 
   def self.testimonial!(user:, attributes:, consent:, video: nil)
+    AppFeatures.require!("testimonials")
     Chains.active!(user)
     raise Exchanges::Invalid, "Votre accord distinct de publication est nécessaire." unless consent == "1"
     user.with_lock do
@@ -37,6 +40,7 @@ class Community
   end
 
   def self.review_testimonial!(record:, actor:, decision:, reason:)
+    AppFeatures.require!("testimonials")
     raise Pundit::NotAuthorizedError unless actor.permission?("community.manage") && actor.id != record.user_id
     raise Exchanges::Invalid, "Décision invalide." unless %w[published rejected reexamine removed].include?(decision)
     record.user.with_lock do

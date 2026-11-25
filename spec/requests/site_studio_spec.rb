@@ -7,58 +7,58 @@ RSpec.describe "Composition du site", type: :request do
   def draft
     Studio.change!(actor: admin, settings: {}, name: "Site de recette")
   end
-  it "réserve le compositeur et le kit au super admin" do
+  it "réserve le constructeur et son aperçu au super admin" do
     login create(:user)
     get admin_site_index_path
     expect(response).to have_http_status(:forbidden)
-    get kit_admin_site_path(draft)
+    get builder_admin_site_path(draft)
+    expect(response).to have_http_status(:forbidden)
+    get preview_admin_studio_path(draft, canvas: "1")
     expect(response).to have_http_status(:forbidden)
   end
-  it "expose les formulaires, écrans du kit et images locales" do
+
+  it "ouvre la V2 et propose les pages et compositions actives" do
     login admin
     get admin_site_index_path
-    expect(response).to have_http_status(:ok)
-    post admin_site_index_path, params: { name: "Site" }
-    version = StudioVersion.last
-    %w[pages header footer kit images].each do |area|
-      get edit_admin_site_path(version, area: area)
-      expect(response).to have_http_status(:ok), response.body
-    end
-    SiteDesign.reference["kit"].each_key do |screen|
-      get kit_admin_site_path(version, page: screen)
-      expect(response).to have_http_status(:ok)
-      expect(response.headers["Cache-Control"]).to include("no-store")
-      expect(response.body).not_to include('src="https://images.unsplash.com')
-    end
+    expect(response).to have_http_status(:see_other)
+    follow_redirect!
+    expect(response.body).to include("Studio V2", "Édition directe")
+    config = studio_builder_configuration
+    expect(config.fetch("pages").keys).to match_array(StudioVersion.last.available_pages)
+    expect(config.fetch("templates").keys).to match_array(SiteDesign.editable_templates.keys)
+    expect(config.fetch("templates").keys & SiteDesign::RETIRED_TEMPLATES).to be_empty
+    expect(config.fetch("initialHtml")).to include('data-studio-chrome="header"', 'data-studio-chrome="footer"')
+    expect(response.headers["Cache-Control"]).to include("no-store")
   end
-  it "ajoute, modifie, déplace, masque, duplique et supprime des sections sans muter la source" do
+
+  it "enregistre une composition modifiée sans muter la source" do
+    login admin
+    original = Studio.change!(actor: admin, name: "Sections existantes", settings: { "site" => { "pages" => { "home" => SiteDesign.home_page } } })
+    document = original.settings.deep_dup
+    blocks = document.dig("site", "pages", "home", "blocks")
+    first = blocks.first.deep_dup
+    first["id"] = "copie-hero"
+    first["hidden"] = true
+    first["values"]["text-1"] = "Une section conservée mais masquée"
+    blocks << first
+    blocks.rotate!
+    blocks.delete_at(1)
+    saved = save_studio_version(original, document)
+    expect(saved.site).to eq(document.fetch("site"))
+    expect(saved.site.dig("pages", "home", "blocks").find { |block| block["id"] == "copie-hero" }).to eq(first)
+    expect(original.reload.site.dig("pages", "home")).to eq(SiteDesign.home_page)
+    get builder_admin_site_path(saved)
+    expect(response).to have_http_status(:ok)
+  end
+
+  it "publie une page et le pied de page puis enregistre un retour à la présentation par défaut" do
     login admin
     original = draft
-    patch admin_site_path(original), params: { operation: "page", page: "home", template: "home-0" }
-    expect(response).to have_http_status(:see_other)
-    version = StudioVersion.last
-    block = version.site.dig("pages", "home", "blocks").first
-    expect(original.reload.site).to eq({})
-    patch admin_site_path(version), params: { operation: "page", page: "home", block_id: block["id"], block_action: "save", hidden: "1", values: { "text-0" => "Notre communauté", "link-0" => "/contact" } }
-    version = StudioVersion.last
-    expect(version.site.dig("pages", "home", "blocks", 0, "hidden")).to be(true)
-    %w[duplicate down up remove].each do |action|
-      patch admin_site_path(version), params: { operation: "page", page: "home", block_id: block["id"], block_action: action }
-      expect(response).to have_http_status(:see_other)
-      version = StudioVersion.last
-    end
-    expect(version.site.dig("pages", "home", "blocks").size).to eq(1)
-    get edit_admin_site_path(version)
-    expect(response).to have_http_status(:ok)
-  end
-  it "publie une page et le chrome, puis restaure une zone sans perdre les autres" do
-    login admin
-    version = draft
-    patch admin_site_path(version), params: { operation: "page", page: "notre-association", title: "Notre association", template: "text" }
-    version = StudioVersion.last
-    patch admin_site_path(version), params: { operation: "chrome", area: "footer", chrome: { title: "Ensemble ici", description: "À Paris", logo: "seos-logo.png", alt: "Notre logo" }, links: { "0" => { label: "Association", url: "/pages/notre-association" }, "1" => { label: "", url: "" } } }
-    expect(response).to have_http_status(:see_other)
-    version = StudioVersion.last
+    settings = { "site" => {
+      "pages" => { "notre-association" => { "title" => "Notre association", "blocks" => [ { "id" => "intro", "template" => "text", "values" => { "title" => "Notre association", "body" => "Entraidons-nous." } } ] } },
+      "footer" => { "title" => "Ensemble ici", "description" => "À Paris", "logo" => "seos-logo.png", "alt" => "Notre logo", "links" => [ { "label" => "Association", "url" => "/pages/notre-association" } ] }
+    } }
+    version = save_studio_version(original, settings, page: "notre-association")
     get preview_admin_studio_path(version, page: "notre-association", canvas: "1")
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Notre association", "Ensemble ici")
@@ -69,14 +69,13 @@ RSpec.describe "Composition du site", type: :request do
     expect(response.body).to include("Ensemble ici", "Notre association")
     get sitemap_path
     expect(response.body).to include(site_page_url("notre-association"))
-    patch admin_site_path(version), params: { operation: "reset", area: "footer" }
-    reset = StudioVersion.last
+    settings["site"].delete("footer")
+    reset = save_studio_version(version, settings, page: "notre-association")
     expect(reset.chrome("footer")["title"]).to eq(SiteDesign::CHROME["footer"]["title"])
     expect(reset.site["pages"]).to eq(version.site["pages"])
     expect(version.reload.status).to eq("published")
-    patch admin_site_path(reset), params: { operation: "reset", area: "pages", page: "notre-association" }
-    expect(StudioVersion.last.site["pages"]).to eq({})
   end
+
   it "publie les sections de maquette avec valeurs échappées et liens réels" do
     values = { "text-0" => '<script>alert("x")</script>' }
     blocks = [ { "id" => "hero", "template" => "home-0", "values" => values } ]
@@ -97,7 +96,9 @@ RSpec.describe "Composition du site", type: :request do
     expect(SiteDesign.valid_block?(base.merge("template" => "../../secret"))).to be(false)
     expect(SiteDesign.valid_block?(base.merge("values" => { "extra" => "value" }))).to be(false)
     login admin
-    expect { patch admin_site_path(draft), params: { operation: "page", page: "home", template: "bad" } }.to change(StudioVersion, :count).by(1)
+    source = draft
+    bad = { "site" => { "pages" => { "home" => { "title" => "Accueil", "blocks" => [ base.merge("template" => "bad") ] } } } }
+    expect { post builder_save_admin_site_path(source), params: { document: bad.to_json, digest: source.digest } }.not_to change(StudioVersion, :count)
     expect(response).to have_http_status(:unprocessable_content)
   end
   it "conserve les images des brouillons privées et révoque l'accès après masquage" do
@@ -117,20 +118,19 @@ RSpec.describe "Composition du site", type: :request do
     get media_path(asset.image.attachment)
     expect(response).to have_http_status(:not_found)
   end
-  it "applique et réinitialise le kit sans modifier les pages" do
+  it "enregistre et retire les tokens sans modifier les pages" do
     login admin
-    version = draft
-    patch admin_site_path(version), params: { operation: "tokens", area: "kit", tokens: { "wave-speed" => "12s", "wave-shape" => "diagonal", "motion" => "subtle", "section-space" => "72px", "button-radius" => "26px", "card-radius" => "16px", "wave-height" => "135px", "deep" => "#004961", "font-heading" => "DM Sans, sans-serif" } }
-    version = StudioVersion.last
+    original = draft
+    settings = { "site" => { "pages" => { "home" => SiteDesign.home_page } }, "tokens" => { "wave-speed" => "12s", "wave-shape" => "diagonal", "motion" => "subtle", "section-space" => "72px", "button-radius" => "26px" } }
+    version = save_studio_version(original, settings)
     expect(version.css).to include("seos-wave", "12s", "polygon", "prefers-reduced-motion")
-    patch admin_site_path(version), params: { operation: "reset", area: "kit" }
-    expect(StudioVersion.last.tokens).to eq({})
+    settings["tokens"] = {}
+    reset = save_studio_version(version, settings)
+    expect(reset.tokens).to eq({})
+    expect(reset.site).to eq(version.site)
     expect(version.reload.tokens["wave-speed"]).to eq("12s")
   end
-end
 
-RSpec.describe "Régressions du kit de maquette", type: :request do
-  let(:admin) { create(:user, :super_admin) }
   it "rend toutes les sections sans reprendre les données personnelles de démonstration" do
     blocks = SiteDesign.templates.keys.map.with_index { |key, i| { "id" => "section-#{i}", "template" => key, "values" => {}, "separator" => "wave_single", "placement" => i.even? ? "top" : "bottom" } }
     version = Studio.change!(actor: admin, name: "Toutes les sections", settings: { "site" => { "pages" => { "home" => { "title" => "Accueil", "blocks" => blocks } } } })
@@ -147,9 +147,9 @@ RSpec.describe "Régressions du kit de maquette", type: :request do
     expect(first).to eq(SiteDesign.default_page("don"))
     version = Studio.change!(actor: admin, name: "Page", settings: {})
     login admin
-    patch admin_site_path(version), params: { operation: "page", page: "don", block_id: first["blocks"].first["id"], block_action: "save", values: { "text-1" => "Un nouveau titre", "text-3" => content.body }, separator: "wave_double", placement: "top" }
-    expect(response).to have_http_status(:see_other)
-    version = StudioVersion.last
+    first["blocks"].first["values"].merge!("text-1" => "Un nouveau titre", "text-3" => content.body)
+    first["blocks"].first.merge!("separator" => "wave_double", "placement" => "top")
+    version = save_studio_version(version, { "site" => { "pages" => { "don" => first } } }, page: "don")
     expect(version.site.dig("pages", "don", "blocks", 0, "values", "text-1")).to eq("Un nouveau titre")
     get preview_admin_studio_path(version, page: "don", canvas: "1")
     expect(response.body).to include("Un nouveau titre", "wave_double")
@@ -157,9 +157,9 @@ RSpec.describe "Régressions du kit de maquette", type: :request do
   it "rejette les opérations et destinations non prévues sans écrire de brouillon" do
     version = Studio.change!(actor: admin, name: "Page", settings: {})
     login admin
-    invalid = [ { operation: "nope" }, { operation: "reset", area: "nope" }, { operation: "chrome", area: "nope" }, { operation: "page", page: "../" }, { operation: "page", page: "home", block_id: "absent", block_action: "save" }, { operation: "chrome", area: "header", chrome: { logo: "https://evil.test/image.png", alt: "Logo" } } ]
-    invalid.each do |attributes|
-      expect { patch admin_site_path(version), params: attributes }.not_to change(StudioVersion, :count)
+    invalid = [ { "untrusted" => {} }, { "site" => { "pages" => { "../" => {} } } }, { "site" => { "header" => { "logo" => "https://evil.test/image.png", "alt" => "Logo" } } } ]
+    invalid.each do |document|
+      expect { post builder_save_admin_site_path(version), params: { document: document.to_json, digest: version.digest } }.not_to change(StudioVersion, :count)
       expect(response).to have_http_status(:unprocessable_content)
     end
     expect { Studio.change!(actor: create(:user, :admin), name: "Effacement", settings: { "site" => {} }, source: version) }.to raise_error(Pundit::NotAuthorizedError)

@@ -1,8 +1,9 @@
 class Studio
   def self.change!(actor:, settings:, name:, source: nil, reset: nil)
     raise Pundit::NotAuthorizedError unless actor.permission?("content.manage") || actor.super_admin?
-    raise Pundit::NotAuthorizedError if !actor.super_admin? && (settings.fetch("tokens", {}).present? || (settings["editorial_resets"].present? || settings.key?("site")) || reset.present?)
+    raise Pundit::NotAuthorizedError if !actor.super_admin? && (settings.fetch("tokens", {}).present? || (settings["editorial_resets"].present? || settings.key?("site") || settings.key?("legal_documents")) || reset.present?)
     data = source ? source.settings.except("editorial_resets").deep_dup : {}
+    data.delete("legal_documents") if source&.status == "published"
     if reset.present?
       path = reset.split(".")
       raise Exchanges::Invalid, "Reset inconnu" unless path.size <= 3 && %w[site tokens pages].include?(path.first)
@@ -18,6 +19,7 @@ class Studio
     else
       data = data.deep_merge(settings)
       data["site"] = settings["site"].deep_dup if settings.key?("site")
+      data["legal_documents"] = settings["legal_documents"].deep_dup if settings.key?("legal_documents")
       data["tokens"] = settings["tokens"].deep_dup if settings.key?("site") && settings.key?("tokens")
     end
     if reset == "site" || reset == "pages" || reset.to_s.match?(/\Apages\.(don|echange|points|fonctionnement)\z/)
@@ -60,6 +62,7 @@ class Studio
       when "validate" then version.update!(status: "validated", validated_digest: version.digest)
       when "publish"
         raise Exchanges::Invalid, "Validez la prévisualisation avant publication." unless version.status == "validated" && version.validated_digest == version.digest
+        StudioLegalDocuments.publish!(version, actor)
         version.settings.fetch("editorial_resets", []).each do |id|
           original = ContentVersion.find(id)
           attributes = original.attributes.slice("kind", "slug", "title", "summary", "body", "decorations")

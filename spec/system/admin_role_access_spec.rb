@@ -14,6 +14,7 @@ RSpec.describe "Panneau des annonces pour un admin", type: :system do
     [ 1440, 375 ].each do |width|
       resize_viewport(width)
       visit admin_root_path
+      click_link "Outils de gestion"
       expect(page).to have_link("Gérer les annonces")
       expect(page).not_to have_content("Gestion du site")
       expect(page).not_to have_link("Propositions éditoriales", visible: :all)

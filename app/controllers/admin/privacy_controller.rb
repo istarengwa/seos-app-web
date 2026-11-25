@@ -2,9 +2,11 @@ module Admin
   class PrivacyController < BaseController
     before_action { raise Pundit::NotAuthorizedError unless current_user.permission?("privacy.manage") || current_user.permission?("privacy.rules") }
     def index
-      @requests = DataRequest.includes(:user, :provider_erasure_tasks).order(:response_due_at).limit(100) if current_user.permission?("privacy.manage")
-      @policies = RetentionPolicyVersion.order(id: :desc).limit(30) if current_user.permission?("privacy.rules")
-      @runs = PrivacyRun.order(id: :desc).limit(30) if current_user.permission?("privacy.rules")
+      if current_user.super_admin?
+        redirect_to admin_site_index_path(page: "legal", panel: "retention"), status: :see_other
+      else
+        redirect_to admin_root_path(tab: current_user.permission?("privacy.manage") ? "data" : "tools"), status: :see_other
+      end
     end
     def create
       case params[:operation]
@@ -32,11 +34,22 @@ module Admin
         end
       when "simulate", "publish"
         Retention.policy!(policy: RetentionPolicyVersion.find(params[:record_id]), actor: current_user, action: params[:operation], reason: params[:reason])
-      when "preview_purge" then Retention.preview!(actor: current_user, reason: params[:reason])
-      when "purge" then Retention.execute!(run: PrivacyRun.find(params[:record_id]), actor: current_user)
       else raise Exchanges::Invalid, "Action inconnue."
       end
-      redirect_to admin_privacy_index_path, notice: "Action enregistrée.", status: :see_other
+      if request.format.json?
+        if %w[policy simulate publish].include?(params[:operation])
+          @policies = RetentionPolicyVersion.order(id: :desc).limit(30)
+          render json: { html: render_to_string(partial: "admin/privacy/retention", formats: [ :html ]), message: "Réglages enregistrés." }
+        else
+          render json: { message: "Demande mise à jour." }
+        end
+      else
+        destination = %w[policy simulate publish].include?(params[:operation]) ? admin_site_index_path(page: "legal", panel: "retention") : admin_root_path(tab: "data")
+        redirect_to destination, notice: "Action enregistrée.", status: :see_other
+      end
+    rescue Exchanges::Invalid, ActiveRecord::RecordInvalid => error
+      raise unless request.format.json?
+      render json: { error: error.message }, status: :unprocessable_content
     end
   end
 end

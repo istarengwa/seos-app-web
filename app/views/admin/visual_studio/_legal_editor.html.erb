@@ -1,0 +1,15 @@
+<section class="studio-v2-panel studio-legal-editor" data-studio-panel="legal" hidden>
+  <div class="studio-v2-panel-heading"><span>Contenu juridique</span><h2>Documents légaux</h2></div>
+  <p class="studio-v2-panel-help">Rédigez chaque document ici. L’aperçu montre votre brouillon ; le site conserve son texte actuel jusqu’à la publication.</p>
+  <button type="button" class="studio-legal-reload" data-studio-retention-open>Durées de conservation des données</button>
+  <label>Document à rédiger<select data-legal-document><option value="cgu">Conditions générales d’utilisation</option><option value="confidentialite">Confidentialité et données personnelles</option><option value="cookies">Politique des cookies</option><option value="mentions-legales">Mentions légales</option></select></label>
+  <p class="studio-legal-state" data-legal-state></p>
+  <button type="button" class="studio-legal-reload" data-legal-reload>Reprendre la version publique</button>
+  <label>Titre du document<input type="text" maxlength="200" data-legal-field="title"></label>
+  <label>Résumé <small>Facultatif · 200 caractères maximum</small><textarea maxlength="200" rows="3" data-legal-field="summary"></textarea></label>
+  <label id="studio-legal-body-label">Texte du document</label>
+  <div class="studio-legal-format" aria-label="Mise en forme du document"><button type="button" data-legal-format="bold">Gras</button><button type="button" data-legal-format="heading">Titre de section</button><button type="button" data-legal-format="paragraph">Paragraphe</button><button type="button" data-legal-format="list">Liste</button></div>
+  <div class="studio-legal-body" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="studio-legal-body-label" data-legal-body></div>
+  <p class="studio-v2-panel-help"><span data-legal-count>0</span> / 30 000 caractères. Les exemples et les passages surlignés sont à personnaliser.</p>
+  <p class="studio-legal-state">Les changements seront enregistrés avec cette copie, puis publiés ensemble depuis « Vérifier et publier ».</p>
+</section>

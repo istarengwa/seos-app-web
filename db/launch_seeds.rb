@@ -1,4 +1,4 @@
-if Rails.env.development? || Rails.env.production?
+if Rails.env.development?
   admin = User.find_by!(email: "admin@seos.test")
   super_admin = User.find_by!(email: "superadmin@seos.test")
   %w[users.read reports.manage content.manage operations.read privacy.manage].each do |permission|

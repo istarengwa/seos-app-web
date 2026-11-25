@@ -52,7 +52,7 @@ RSpec.describe OrganizationWorkflow do
   it "protège le dernier propriétaire en service et en base, puis récupère un accès exceptionnel" do
     membership = organization.organization_memberships.find_by!(user: owner)
     expect { described_class.membership!(membership: membership, actor: owner, role: "editor", status: "active") }.to raise_error(Exchanges::Invalid)
-    expect { membership.update!(status: "revoked") }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { membership.update!(status: "revoked") }.to raise_error(ActiveRecord::RecordInvalid)
     replacement = create(:user)
     expect { described_class.recover_owner!(organization: organization, actor: owner, user: replacement, reason: "Non") }.to raise_error(Pundit::NotAuthorizedError)
     described_class.recover_owner!(organization: organization, actor: admin, user: replacement, reason: "Compte historique indisponible")

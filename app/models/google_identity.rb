@@ -2,8 +2,9 @@ class GoogleIdentity < ApplicationRecord
   belongs_to :user
   validates :uid, presence: true, uniqueness: true
   validates :user_id, uniqueness: true
-  def self.enabled? = ENV["GOOGLE_CLIENT_ID"].present? && ENV["GOOGLE_CLIENT_SECRET"].present?
+  def self.enabled? = AppFeatures.enabled?("google_login") && ENV["GOOGLE_CLIENT_ID"].present? && ENV["GOOGLE_CLIENT_SECRET"].present?
   def self.resolve!(auth:, user: nil)
+    AppFeatures.require!("google_login")
     raise Exchanges::Invalid, "Identité Google non vérifiée." unless auth && auth["provider"] == "google_oauth2" && auth["uid"].present? && auth.dig("info", "email_verified") == true
     identity = find_by(uid: auth["uid"])
     if user

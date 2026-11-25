@@ -8,7 +8,7 @@ RSpec.describe "Footer et navigation légale", type: :system do
     [ 375, 1440 ].each do |width|
       resize_viewport(width)
       visit root_path
-      expect(page).to have_css("[data-studio-block]", count: 11)
+      expect(page).to have_css("[data-studio-block]", count: 10)
       expect(page.evaluate_script("document.documentElement.scrollWidth <= innerWidth")).to be(true)
       page.execute_script("document.querySelector('.site-footer').scrollIntoView()")
       expect(page).to be_axe_clean.within(".site-footer").according_to(:wcag2a, :wcag2aa)

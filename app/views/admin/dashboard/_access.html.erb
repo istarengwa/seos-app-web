@@ -1,0 +1,44 @@
+<h2>Accès des membres</h2>
+<p>Préparez une suspension ou bloquez temporairement la connexion d’une adresse e-mail. Chaque intervention conserve son motif dans le journal d’audit.</p>
+<div class="admin-access-grid">
+  <article class="card admin-access-card">
+    <h3>Suspension groupée</h3>
+    <p>Choisissez jusqu’à 20 membres actifs. La suspension sera appliquée après confirmation par un autre super administrateur, dans les 15 minutes.</p>
+    <%= form_with url: admin_operations_path do |form| %>
+      <%= hidden_field_tag :operation, "preview", id: nil %>
+      <%= input_field form, :ids, "Numéros des membres à suspendre", id: "bulk-member-ids", placeholder: "Ex. : 12, 34, 56", required: true, aria: { describedby: "bulk-member-help" } %>
+      <p class="admin-field-help" id="bulk-member-help">Recopiez les numéros précédés de # dans la <%= link_to "liste des membres", admin_users_path %>. Séparez-les par des virgules ou des espaces, avec ou sans #. Exemple : 12, 34, 56. N’indiquez ni noms ni adresses e-mail.</p>
+      <%= input_field form, :reason, "Motif de la suspension", id: "bulk-reason", placeholder: "Ex. : comptes diffusant des annonces frauduleuses", required: true, maxlength: 500 %>
+      <%= form.button "Prévisualiser les membres", class: "btn btn-deep" %>
+    <% end %>
+  </article>
+  <article class="card admin-access-card">
+    <h3>Blocage temporaire d’une adresse e-mail</h3>
+    <p>Empêchez la connexion avec cette adresse jusqu’à la date choisie. Le blocage prend fin automatiquement ; les adresses des administrateurs sont protégées.</p>
+    <%= form_with url: admin_operations_path do |form| %>
+      <%= hidden_field_tag :operation, "block", id: nil %>
+      <%= input_field form, :email, "Adresse e-mail à bloquer", type: :email_field, id: "block-email", placeholder: "Ex. : membre@example.org", required: true, autocomplete: "off" %>
+      <%= input_field form, :expires_at, "Fin du blocage", type: :datetime_local_field, id: "block-expiry", required: true, min: 1.minute.from_now.strftime("%Y-%m-%dT%H:%M"), max: (1.year.from_now - 1.minute).strftime("%Y-%m-%dT%H:%M"), aria: { describedby: "block-expiry-help" } %>
+      <p class="admin-field-help" id="block-expiry-help">Choisissez une date et une heure futures, dans moins d’un an. Heure de Paris.</p>
+      <%= input_field form, :reason, "Motif du blocage", id: "block-reason", placeholder: "Ex. : tentatives de connexion abusives documentées", required: true, maxlength: 500 %>
+      <%= form.button "Bloquer cet e-mail", class: "btn btn-outline" %>
+    <% end %>
+  </article>
+</div>
+<section class="admin-access-history" aria-labelledby="bulk-history-title">
+  <h3 id="bulk-history-title">Suspensions préparées et récentes</h3>
+  <% if @operations.empty? %><p class="empty-state">Aucune suspension groupée n’a été préparée.</p><% end %>
+  <% @operations.each do |operation| %>
+    <article class="card">
+      <h4>Sélection n° <%= operation.id %> · <%= pluralize(operation.targets.size, "membre") %></h4>
+      <ul><% operation.targets.each_key do |id| %><li><% if (member = @operation_members[id]) %><%= link_to "#{public_name(member)} (##{id})", admin_user_path(member) %><% else %>Membre #<%= id %> · compte indisponible<% end %></li><% end %></ul>
+      <p><strong>Motif :</strong> <%= operation.reason %></p>
+      <p><strong><%= operation.executed_at ? "Suspension effectuée" : (operation.expires_at <= Time.current ? "Prévisualisation expirée" : "En attente d’un autre super administrateur") %></strong> · Préparée par le super administrateur #<%= operation.actor_id %> · Échéance : <%= l operation.expires_at, format: :short %></p>
+      <% if !operation.executed_at && operation.expires_at > Time.current %>
+        <% if operation.actor_id != current_user.id %>
+          <%= button_to "Confirmer la suspension de ces membres", admin_operations_path, params: { operation: "execute", record_id: operation.id }, class: "btn btn-deep" %>
+        <% else %><p>Un autre super administrateur doit ouvrir cet onglet pour confirmer votre sélection.</p><% end %>
+      <% end %>
+    </article>
+  <% end %>
+</section>

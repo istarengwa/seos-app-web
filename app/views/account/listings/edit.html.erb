@@ -8,7 +8,7 @@
     <section class="listing-wizard-card" data-controller="listing-wizard">
       <header><div><span class="eyebrow">Étape <%= @step %> sur 4</span><h1><%= ["Que souhaitez-vous faire ?", "Comment souhaitez-vous échanger ?", "Présentez votre annonce", "Vérifiez avant de publier"][@step - 1] %></h1></div><span class="listing-wizard-icon"><%= quest_icon(["people", "link", "listing", "trophy"][@step - 1]) %></span></header>
       <%= render "shared/record_errors", record: @listing %>
-      <% if @listing.organization %><p class="listing-wizard-context">Publication au nom de <strong><%= @listing.organization.name %></strong>.</p><% end %>
+      <% if @listing.organization && AppFeatures.enabled?("associations") %><p class="listing-wizard-context">Publication au nom de <strong><%= @listing.organization.name %></strong>.</p><% end %>
       <% if @step < 4 %>
         <%= form_with model: @listing, url: (@listing.persisted? ? account_listing_path(@listing, step: @step) : account_listings_path(step: @step)), method: (@listing.persisted? ? :patch : :post) do |f| %>
           <%= f.hidden_field :lock_version %><%= hidden_field_tag :organization_slug, @listing.organization.slug if @listing.organization %>

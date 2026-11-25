@@ -1,40 +1,48 @@
-# SQLite. Versions 3.8.0 and up are supported.
-#   gem install sqlite3
-#
-#   Ensure the SQLite 3 gem is defined in your Gemfile
-#   gem "sqlite3"
-#
 default: &default
   adapter: sqlite3
-  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
   timeout: 5000
 
 development:
   <<: *default
   database: storage/development.sqlite3
 
-# Warning: The database defined as "test" will be erased and
-# re-generated from your development database when you run "rake".
-# Do not set this db to the same as development or production.
 test:
   <<: *default
   database: storage/test.sqlite3
 
-# Store production database in the storage/ directory, which by default
-# is mounted as a persistent Docker volume in config/deploy.yml.
+# One PostgreSQL server, four databases. No production SQLite files.
 production:
-  primary:
-    <<: *default
-    database: storage/production.sqlite3
+  primary: &production
+    adapter: postgresql
+    encoding: unicode
+    host: <%= ENV.fetch("POSTGRES_HOST", "postgres") %>
+    port: <%= ENV.fetch("POSTGRES_PORT", 5432) %>
+    username: <%= ENV.fetch("POSTGRES_USER", "seos") %>
+    password: <%= ENV["POSTGRES_PASSWORD"] %>
+    max_connections: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
+    database: <%= ENV.fetch("POSTGRES_DB", "seos_production") %>
+    schema_format: ruby
+    schema_dump: schema.rb
+    seeds: true
   cache:
-    <<: *default
-    database: storage/production_cache.sqlite3
+    <<: *production
+    database: <%= ENV.fetch("POSTGRES_DB", "seos_production") %>_cache
+    schema_format: ruby
+    schema_dump: cache_schema.rb
+    seeds: false
     migrations_paths: db/cache_migrate
   queue:
-    <<: *default
-    database: storage/production_queue.sqlite3
+    <<: *production
+    database: <%= ENV.fetch("POSTGRES_DB", "seos_production") %>_queue
+    schema_format: ruby
+    schema_dump: queue_schema.rb
+    seeds: false
     migrations_paths: db/queue_migrate
   cable:
-    <<: *default
-    database: storage/production_cable.sqlite3
+    <<: *production
+    database: <%= ENV.fetch("POSTGRES_DB", "seos_production") %>_cable
+    schema_format: ruby
+    schema_dump: cable_schema.rb
+    seeds: false
     migrations_paths: db/cable_migrate

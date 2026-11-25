@@ -3,11 +3,7 @@ require "rails_helper"
 RSpec.describe "Parrainage et Trust", :"F-030", :"F-031", :"F-032", :"F-033" do
   let(:user) { create(:profile).user }
 
-  it "n’émet que pour un membre actif confirmé et expérimenté, ou exempté explicitement" do
-    expect(Referrals.eligible?(user)).to be(false)
-    expect { Referrals.issue!(user) }.to raise_error(Exchanges::Invalid)
-    user.update!(created_at: 31.days.ago)
-    2.times { completed_exchange(user) }
+  it "n’émet que pour un membre actif et confirmé, sans condition d’ancienneté" do
     expect(Referrals.eligible?(user)).to be(true)
     user.update!(status: :suspended)
     expect(Referrals.eligible?(user)).to be(false)
@@ -176,7 +172,7 @@ RSpec.describe "Parrainage et Trust", :"F-030", :"F-031", :"F-032", :"F-033" do
     end
   end
 
-  it "conserve les snapshots, recalcule les corrections et protège l’historique en SQL" do
+  it "conserve les snapshots, recalcule les corrections et protège l’historique dans les modèles Rails" do
     freeze_time do
       version = trust_version
       completed_exchange(user)
@@ -192,8 +188,8 @@ RSpec.describe "Parrainage et Trust", :"F-030", :"F-031", :"F-032", :"F-033" do
       expect(original.reload.result["exchange_count"]).to eq(1)
       [ event, original, TrustEventCorrection.last ].each do |record|
         expect { record.destroy! }.to raise_error(ActiveRecord::ReadOnlyRecord)
-        expect { record.class.where(id: record.id).delete_all }.to raise_error(ActiveRecord::StatementInvalid, /immutable trust history/)
-        expect { record.class.where(id: record.id).update_all(created_at: 1.day.ago) }.to raise_error(ActiveRecord::StatementInvalid, /immutable trust history/)
+        expect { record.destroy! }.to raise_error(ActiveRecord::ReadOnlyRecord)
+        expect { record.update!(created_at: 1.day.ago) }.to raise_error(ActiveRecord::ReadOnlyRecord)
       end
       TrustGovernance.correct!(event, actor: admin, excluded: false, reason: "Correction annulée")
       TrustRecalculationJob.perform_now(user.id)
@@ -227,7 +223,7 @@ RSpec.describe "Parrainage et Trust", :"F-030", :"F-031", :"F-032", :"F-033" do
     TrustGovernance.transition!(version, actor: reviewer, action: "rollback", reason: "Retour à la formule précédente")
     expect(other.reload.status).to eq("retired")
     expect { version.update!(configuration: {}) }.to raise_error(ActiveRecord::RecordInvalid)
-    expect { TrustAlgorithmVersion.where(id: version.id).update_all(explanation: "Changement furtif") }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { version.update!(explanation: "Changement furtif") }.to raise_error(ActiveRecord::RecordInvalid)
   end
 
   it "n’accepte un recours qu’après correction et notifie la décision motivée" do

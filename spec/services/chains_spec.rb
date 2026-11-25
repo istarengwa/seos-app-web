@@ -24,8 +24,8 @@ RSpec.describe Chains do
     expect { ChainReward.first.update!(points: 99) }.to raise_error(ActiveRecord::ReadOnlyRecord)
     service, = Chains.invite!(chain: chain, actor: provider, description: "Suite")
     expect { Chains.confirm!(service: service, actor: user) }.to raise_error(Exchanges::Invalid)
-    expect { chain.update!(creator: admin) }.to raise_error(ActiveRecord::StatementInvalid)
-    expect { chain.chain_services.first.update!(description: "Réécrit") }.to raise_error(ActiveRecord::StatementInvalid)
+    expect { chain.update!(creator: admin) }.to raise_error(ActiveRecord::RecordInvalid)
+    expect { chain.chain_services.first.update!(description: "Réécrit") }.to raise_error(ActiveRecord::ReadOnlyRecord)
   end
 
   it "expire les invitations, protège le prestataire et permet la médiation" do

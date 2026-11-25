@@ -19,6 +19,7 @@ export default class extends Controller {
   }
   disconnect() { window.removeEventListener("popstate", this.restore) }
   select(event) {
+    event.preventDefault()
     const key = event.currentTarget.dataset.key
     this.activate(key)
     const url = new URL(location.href)
